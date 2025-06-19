@@ -3,11 +3,14 @@
 from app import app
 from flask import request
 
+from .ai import pddl as ai
+
 items = []
 
 @app.route('/')
 def hello():
-    return "Hello, Flask!"
+    text = ai.ai_fun()
+    return text
 
 @app.route('/items', methods=['GET'])
 def get_items():

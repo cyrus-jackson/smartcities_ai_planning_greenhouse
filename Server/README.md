@@ -23,7 +23,8 @@ The project is organized as follows:
    Start the Flask application:
 
    ```bash
-   python run.py
+   From the directory: smartcities_ai_planning_greenhouse\Server
+   python -m run
    ```
 
    The app will be available at [http://localhost:5000](http://localhost:5000).
