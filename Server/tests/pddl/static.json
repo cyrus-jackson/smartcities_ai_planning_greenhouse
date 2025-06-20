@@ -1,0 +1,9 @@
+{
+    "name": "static1",
+    "hours_until_rain": 40,
+    "water_tank_level": 15,
+    "goals": [{
+        "type": "or",
+        "states": ["alert-high", "alert-warning"]
+    }]
+}

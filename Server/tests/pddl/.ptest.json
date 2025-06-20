@@ -1,0 +1,15 @@
+{
+    "defaultDomain": "../../app/ai/planner/domain.pddl",
+    "defaultProblem": "../../app/ai/planner/problem.pddl",
+    "defaultOptions": "",
+    "cases": [
+        {
+            "label": "Test case number 1",
+            "preProcess": {
+                "kind": "jinja2",
+                "data": "static.json"
+            },
+            "description": "Test Case"
+        }
+    ]
+}
