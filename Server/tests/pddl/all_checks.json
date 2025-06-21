@@ -1,0 +1,33 @@
+{
+  "name": "all_checks_case",
+  "fluents": {
+    "hours_until_rain": 40,
+    "water_tank_level": 56,
+    "temperature": 50,
+    "humidity": 50
+  },
+  "init": [
+    "outside_environment_safe",
+    "close_servo s2",
+    "close_servo s1",
+    "fan_off"
+  ],
+  "goals": [
+    {
+      "type": "or",
+      "states": ["alert-high", "alert-warning", "no_alert"]
+    },
+    {
+      "type": "or",
+      "states": ["fan_on", "fan_off"]
+    },
+    {
+      "type": "or",
+      "states": ["run_servo s1", "close_servo s1"]
+    },
+    {
+      "type": "or",
+      "states": ["run_servo s2", "close_servo s2"]
+    }
+  ]
+}

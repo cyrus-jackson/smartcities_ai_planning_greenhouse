@@ -4,10 +4,34 @@
     "defaultOptions": "",
     "cases": [
         {
-            "label": "Test case number 1",
+            "label": "Test Water Tank Level",
             "preProcess": {
                 "kind": "jinja2",
                 "data": "static.json"
+            },
+            "description": "Test Case"
+        },
+        {
+            "label": "Test Fan",
+            "preProcess": {
+                "kind": "jinja2",
+                "data": "fan_check.json"
+            },
+            "description": "Test Case"
+        },
+        {
+            "label": "Test Roof",
+            "preProcess": {
+                "kind": "jinja2",
+                "data": "roof_check.json"
+            },
+            "description": "Test Case"
+        },
+        {
+            "label": "Test Complete Problem",
+            "preProcess": {
+                "kind": "jinja2",
+                "data": "all_checks.json"
             },
             "description": "Test Case"
         }

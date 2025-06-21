@@ -1,25 +1,36 @@
-;!pre-parsing:{type: "jinja2", data: "static.json"}
+;!pre-parsing:{type: "jinja2", data: "all_checks.json"}
 
-(define (problem {{data.name}})
+(define (problem {{ data.name }})
   (:domain greenhouse)
 
   (:objects
     m1 - measurement
     t1 - time
+    s1 s2 - servo
+    temp - temperature
   )
 
   (:init
-    (= (hours-until-rain) {{data.hours_until_rain}})
-    (= (water-tank-level) {{data.water_tank_level}})
+    ; Fluents
+    {% for key, value in data.fluents.items() %}
+    (= ({{ key }}) {{ value }})
+    {% endfor %}
+
+    ; Boolean predicates
+    {% for fact in data.init %}
+    ({{ fact }})
+    {% endfor %}
   )
 
   (:goal
-    {% for goal in data.goals %}
+    (and
+      {% for goal in data.goals %}
       ({{ goal.type }}
-        {% for s in goal.states %}
-          ({{ s }})
+        {% for state in goal.states %}
+        ({{ state }})
         {% endfor %}
       )
-    {% endfor %}
+      {% endfor %}
+    )
   )
 )

@@ -1,9 +1,12 @@
 {
     "name": "static1",
-    "hours_until_rain": 40,
-    "water_tank_level": 15,
+    "fluents": {
+        "hours_until_rain": 40,
+        "water_tank_level": 56
+    },
+    "init": ["outside_environment_safe"],
     "goals": [{
         "type": "or",
-        "states": ["alert-high", "alert-warning"]
+        "states": ["alert-high", "alert-warning", "no_alert"]
     }]
 }

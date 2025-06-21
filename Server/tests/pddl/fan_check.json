@@ -1,0 +1,12 @@
+{
+    "name": "fan_check",
+    "fluents": {
+        "temperature": 40,
+        "humidity": 50
+    },
+    "init": [],
+    "goals": [{
+        "type": "or",
+        "states": ["fan_on"]
+    }]
+}
