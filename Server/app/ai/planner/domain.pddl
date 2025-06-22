@@ -77,7 +77,7 @@
   (:action turn_on_fan
     :parameters ()
     :precondition (and
-      (fan_off)
+      ; (fan_off)
       (or 
         (> (temperature) 24)
         (> (humidity) 10)
@@ -92,7 +92,7 @@
   (:action turn_off_fan
     :parameters ()
     :precondition (and
-      (fan_on)
+      ; (fan_on)
       (<= (temperature) 24)
       (<= (humidity) 10)
     )
@@ -121,8 +121,11 @@
   (:action close_roof
     :parameters (?x - servo)
     :precondition (or
-      (run_servo ?x)
       (not (outside_environment_safe))
+      (or
+        (run_servo ?x)
+        (fan_off)
+      )
     )
     :effect (and 
       (close_servo ?x)

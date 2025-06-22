@@ -2,15 +2,15 @@
   "name": "all_checks_case",
   "fluents": {
     "hours_until_rain": 40,
-    "water_tank_level": 56,
-    "temperature": 50,
+    "water_tank_level": 16,
+    "temperature": 5,
     "humidity": 50
   },
   "init": [
     "outside_environment_safe",
-    "close_servo s2",
-    "close_servo s1",
-    "fan_off"
+    "not (alert-warning)",
+    "not (alert-high)",
+    "not (no_alert)"
   ],
   "goals": [
     {
