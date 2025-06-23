@@ -1,72 +1,60 @@
-import sys, os, datetime, json
-from jinja2 import Template, Environment
-from typing import Dict, List
+import os
+from jinja2 import Environment, FileSystemLoader, TemplateNotFound
 
-# read the template from the standard input
-input = "".join(sys.stdin.readlines())
+# Path to the directory containing the template
+TEMPLATE_DIR = os.path.join(os.path.dirname(__file__))
+PROBLEM_TEMPLATE_FILE = "problem.pddl"
+DOMAIN_FILE = "domain.pddl"
 
-def tif_filter(time: float, value: float, *function_name) -> str:
-    """ Creates time-initial fluent if time>0, or plain initialization otherwise """
-    assignment = "(= ({}) {})".format(' '.join(function_name), value)
-    return "(at {} {})".format(time, assignment) if time > 0\
-        else assignment
+# Sample
+data = {
+    "name": "greenhouse-problem-1",
+    "fluents": {"temperature": 25, "humidity": 60},
+    "init": ["servo-open s1", "servo-closed s2"],
+    "goals": [
+        {
+            "type": "and",
+            "states": ["servo-open s2", "temperature-high temp"]
+        }
+    ]
+}
 
-def load_template_from_string(template_text: str) -> Template:
-    jinja2_env = Environment(trim_blocks = False, lstrip_blocks = False)
-    jinja2_env.filters['tif'] = tif_filter
+# Set up Jinja2 environment
+env = Environment(
+    loader=FileSystemLoader(TEMPLATE_DIR),
+    trim_blocks=True,
+    lstrip_blocks=True
+)
 
-    return jinja2_env.from_string(template_text)
+domain_content = None
 
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+def read_file_safe(filepath):
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        print(f"Error: File not found: {filepath}")
+        return None
+    except Exception as e:
+        print(f"Error reading {filepath}: {e}")
+        return None
 
-def remove_doubled_whitespace(text: str) -> str:
-    lines = text.splitlines(True)
+def read_domain_data(domain_file=DOMAIN_FILE):
+    domain_path = os.path.join(TEMPLATE_DIR, domain_file)
+    return read_file_safe(domain_path)
 
-    output = ''
-    was_white_space = False
+domain_content = read_domain_data() if domain_content == None else domain_content
 
-    for line in lines:
-        is_white_space = len(line.strip()) == 0
-        if not is_white_space:
-            output = output + line
-        elif not was_white_space:
-            output = output + line
-        
-        was_white_space = is_white_space
+def get_domain_data():
+    return domain_content
 
-    return output
-
-def transform(name: str, amounts: List, template_string: str) -> str:
-    """ transforms the template; this function may be called from other Python code, e.g. Flask web service """
-
-    data = {}
-    data['name'] = name
-    data['amount'] = sum(amounts)
-
-    template = load_template_from_string(template_string)
-    transformed = template.render(data=data)
-    compacted = remove_doubled_whitespace(transformed)
-    return compacted
-
-def main(args):
-    """ transforms the problem file template """
-    if len(args) < 1:
-        # print errors to the error stream
-        eprint("Usage: {0} <amounts-to-sum>".format(os.path.basename(sys.argv[0])))
-        exit(-1)
-
-    # this is a simple example of an input data transformation in Python:
-    amounts = [float(a.strip()) for a in args]
-
-    name = 'pumps_' + '-'.join(args)
-
-    # render the values into the template
-    transformed = transform(name, amounts, input)
-
-    # output the template to the standard output
-    print(transformed)
-    print("; This PDDL problem file was generated on", str(datetime.datetime.now()))
-
-if __name__ == "__main__":
-    main(sys.argv[1:])
+def get_problem_file_with_data(unrendered_data=data, template_file=PROBLEM_TEMPLATE_FILE):
+    try:
+        template = env.get_template(template_file)
+        return template.render(data=unrendered_data)
+    except TemplateNotFound:
+        print(f"Error: Template not found: {template_file}")
+        return None
+    except Exception as e:
+        print(f"Error rendering template {template_file}: {e}")
+        return None
