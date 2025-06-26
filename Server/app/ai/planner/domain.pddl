@@ -18,6 +18,7 @@
     (outside_environment_safe)
     (run_servo ?x - servo)
     (close_servo ?x - servo)
+    (keep_greenhouse_comfortable)
   )
 
   (:functions 
@@ -27,6 +28,37 @@
     (humidity)
   )
 
+;-------------------------------
+; Meta-goal Action
+;-------------------------------
+
+  (:action keep_greenhouse_comfortable
+    :parameters ()
+    :precondition (and
+      ;; Alert precondition based on fluent value ranges
+      (or
+        (and (> (hours_until_rain) 30) (<= (water_tank_level) 10) (alert-high))
+        (and (> (hours_until_rain) 30) (> (water_tank_level) 10) (<= (water_tank_level) 50) (alert-warning))
+        (and (> (water_tank_level) 50) (no_alert))
+      )
+
+      ;; Fan preconditions
+      (or
+        (and (fan_on) (or (> (temperature) 24) (> (humidity) 10)))
+        (and (fan_off) (<= (temperature) 24) (<= (humidity) 10))
+      )
+
+      ;; Servo preconditions
+      (forall (?s - servo)
+        (or
+          (and (outside_environment_safe) (fan_on) (run_servo ?s))
+          (and (not (outside_environment_safe)) (close_servo ?s))
+          (and (outside_environment_safe) (fan_off) (close_servo ?s))
+        )
+      )
+    )
+    :effect (keep_greenhouse_comfortable)
+  )
 ;-------------------------------
 ; Notifications
 ;-------------------------------
@@ -77,7 +109,6 @@
   (:action turn_on_fan
     :parameters ()
     :precondition (and
-      ; (fan_off)
       (or 
         (> (temperature) 24)
         (> (humidity) 10)
@@ -92,7 +123,6 @@
   (:action turn_off_fan
     :parameters ()
     :precondition (and
-      ; (fan_on)
       (<= (temperature) 24)
       (<= (humidity) 10)
     )
@@ -132,5 +162,5 @@
       (not (run_servo ?x))
     )
   )
-  
+
 )

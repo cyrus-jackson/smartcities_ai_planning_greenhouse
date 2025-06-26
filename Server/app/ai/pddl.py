@@ -1,39 +1,56 @@
 import requests
 import time
 import os
+import re
 from pprint import pprint
-from .adaptor import planning_editor_adaptor
 from .planner import pddl_transform as pt
 
+from app.db import sqldb as db
 
-req_body = {
-    'domain': pt.get_domain_data(),
-    'problem': pt.get_problem_file_with_data()
-    }
 
-print(req_body)
+def parse_enhsp_output(response_json):
+    try:
+        raw_output = response_json['result']['output']['plan']
 
-# req_body = {
-# "domain":"(define (domain BLOCKS) (:requirements :strips) (:predicates (on ?x ?y) (ontable ?x) (clear ?x) (handempty) (holding ?x) ) (:action pick-up :parameters (?x) :precondition (and (clear ?x) (ontable ?x) (handempty)) :effect (and (not (ontable ?x)) (not (clear ?x)) (not (handempty)) (holding ?x))) (:action put-down :parameters (?x) :precondition (holding ?x) :effect (and (not (holding ?x)) (clear ?x) (handempty) (ontable ?x))) (:action stack :parameters (?x ?y) :precondition (and (holding ?x) (clear ?y)) :effect (and (not (holding ?x)) (not (clear ?y)) (clear ?x) (handempty) (on ?x ?y))) (:action unstack :parameters (?x ?y) :precondition (and (on ?x ?y) (clear ?x) (handempty)) :effect (and (holding ?x) (clear ?y) (not (clear ?x)) (not (handempty)) (not (on ?x ?y)))))",
-# "problem":"(define (problem BLOCKS-4-0) (:domain BLOCKS) (:objects D B A C ) (:INIT (CLEAR C) (CLEAR A) (CLEAR B) (CLEAR D) (ONTABLE C) (ONTABLE A) (ONTABLE B) (ONTABLE D) (HANDEMPTY)) (:goal (AND (ON D C) (ON C B) (ON B A))) )"
-# }
+        if "Found Plan:" not in raw_output:
+            return False
 
-# # Send job request to solve endpoint
-# solve_request_url=requests.post("https://solver.planning.domains:5001/package/lama-first/solve", json=req_body).json()
+        plan_steps = re.findall(r'\d+\.\d+:\s+\([^)]+\)', raw_output)
 
-# # Query the result in the job
-# result = requests.post('https://solver.planning.domains:5001' + solve_request_url['result'])
+        return [step.strip() for step in plan_steps] if plan_steps else False
 
-# print('Computing...')
-# while result.json().get("status","")== 'PENDING':
+    except (KeyError, IndexError, TypeError):
+        return False
+    
 
-#     # Query the result every 0.5 seconds while the job is executing
-#     result=requests.post('https://solver.planning.domains:5001' + solve_request_url['result'])
-#     time.sleep(0.5)
+def insert_problem(data):
+    req_body = {
+        'domain': pt.get_domain_data(),
+        'problem': pt.get_problem_file_with_data(unrendered_data=data)
+        }
 
-# pprint(result.json()['result']['output'])
+    # print(req_body)
+    problem_name = "problem_"+str(time.time())
+    
+    solve_request_url=requests.post("https://solver.planning.domains:5001/package/enhsp/solve", json=req_body).json()
+
+    # Query the result
+    result = requests.post('https://solver.planning.domains:5001' + solve_request_url['result'])
+
+    while result.json().get("status","")== 'PENDING':
+
+        # Query the result every 0.5 seconds while the job is executing
+        result=requests.post('https://solver.planning.domains:5001' + solve_request_url['result'])
+        time.sleep(0.5)
+
+    parsed_plan = parse_enhsp_output(result.json())
+    # print(parsed_plan)
+    if parsed_plan:
+        db.insert_pddl_problem(problem_name, req_body['problem'], parsed_plan)
+
 
 
 
 def ai_fun():
+    #insert_problem()
     return "Hello, AI Planning"

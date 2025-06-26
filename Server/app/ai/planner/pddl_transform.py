@@ -6,18 +6,7 @@ TEMPLATE_DIR = os.path.join(os.path.dirname(__file__))
 PROBLEM_TEMPLATE_FILE = "problem.pddl"
 DOMAIN_FILE = "domain.pddl"
 
-# Sample
-data = {
-    "name": "greenhouse-problem-1",
-    "fluents": {"temperature": 25, "humidity": 60},
-    "init": ["servo-open s1", "servo-closed s2"],
-    "goals": [
-        {
-            "type": "and",
-            "states": ["servo-open s2", "temperature-high temp"]
-        }
-    ]
-}
+
 
 # Set up Jinja2 environment
 env = Environment(
@@ -48,7 +37,7 @@ domain_content = read_domain_data() if domain_content == None else domain_conten
 def get_domain_data():
     return domain_content
 
-def get_problem_file_with_data(unrendered_data=data, template_file=PROBLEM_TEMPLATE_FILE):
+def get_problem_file_with_data(unrendered_data, template_file=PROBLEM_TEMPLATE_FILE):
     try:
         template = env.get_template(template_file)
         return template.render(data=unrendered_data)

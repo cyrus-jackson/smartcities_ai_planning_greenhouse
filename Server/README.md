@@ -29,6 +29,16 @@ The project is organized as follows:
 
    The app will be available at [http://localhost:5000](http://localhost:5000).
 
+   a. ** **
+   \Server> celery -A app.celery_worker worker --loglevel=info --pool=solo
+
+   b. 
+   Server> celery -A app.celery_worker.celery beat --loglevel=info
+
+   c.
+   start ubuntu terminal
+   
+
 3. **Run Tests:**
 
    To run the unit tests, execute the following command:
