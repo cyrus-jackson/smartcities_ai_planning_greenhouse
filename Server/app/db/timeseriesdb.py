@@ -1,12 +1,14 @@
 import app.utils.state_constants as states
+from datetime import datetime, timezone
+import pandas as pd
 import os
 import certifi
 from influxdb_client_3 import InfluxDBClient3, Point, flight_client_options
 
 token = os.environ.get("INFLUXDB_TOKEN")
-org = "SmartCities"
-host = "https://eu-central-1-1.aws.cloud2.influxdata.com"
-database = "smart-greenhouse"
+org = os.environ.get("INFLUXDB_ORG")
+host = os.environ.get("INFLUXDB_HOST")
+database = os.environ.get("INFLUXDB_DATABASE")
 
 fh = open(certifi.where(), "r")
 cert = fh.read()
@@ -64,7 +66,7 @@ def get_latest_plan_id(client):
     plan_id = df[states.PLAN_ID][0] if len(df[states.PLAN_ID]) > 0 else None
     return plan_id
 
-def get_fluent_means(client, plan_id):
+def get_temperature_humidity_means(client, plan_id):
     fluents = {}
     for fluent in [states.TEMPERATURE, states.HUMIDITY]:
         query = f'''
@@ -78,8 +80,34 @@ def get_fluent_means(client, plan_id):
             value = df[col_name].iloc[0]
             if value is not None:
                 fluents[fluent] = float(value)
-    # fluents['hours_until_rain'] = 40
-    # fluents['water_tank_level'] = 70
+    return fluents
+
+def get_latest_hours_until_rain(client):
+    query = '''
+        SELECT * FROM "hours_until_rain" ORDER BY time DESC LIMIT 1
+    '''
+    result = client.query(query, database=database)
+    df = result.to_pandas()
+    if not df.empty and "hours_until_rain" in df.columns and "time" in df.columns:
+        value = df["hours_until_rain"].iloc[0]
+        ts = df["time"].iloc[0]
+        if value is not None and ts is not None:
+            now = datetime.now(timezone.utc)
+            if not isinstance(ts, pd.Timestamp):
+                ts = pd.to_datetime(ts)
+            if ts.tzinfo is None:
+                ts = ts.tz_localize('UTC')
+            hours_since = (now - ts).total_seconds() / 3600.0
+            hours_until_rain = max(0, float(value) - hours_since)
+            hours_until_rain = round(hours_until_rain, 2)
+            return hours_until_rain
+    return None
+
+def get_fluent_means(client, plan_id):
+    fluents = get_temperature_humidity_means(client, plan_id)
+    hours_until_rain = get_latest_hours_until_rain(client)
+    if hours_until_rain is not None:
+        fluents["hours_until_rain"] = hours_until_rain
     fluents = validate_fluents(fluents)
     return fluents
 
@@ -117,6 +145,28 @@ def get_data():
     }
     print(data)
     return data
+
+def insert_hours_until_rain(data):
+    try:
+        client = _InfluxSingleton.get_client()
+        probabilities = data["hourly"]["precipitation_probability"]
+        hours_until_rain = None
+        for idx, prob in enumerate(probabilities):
+            if prob > 10:
+                hours_until_rain = idx  # hours from now
+                break
+        if hours_until_rain is not None:
+            point = (
+                Point("hours_until_rain")
+                .field("hours_until_rain", hours_until_rain)
+            )
+            client.write(database=database, record=point)
+            print(f"Inserted hours_until_rain={hours_until_rain} into timeseriesdb.")
+        else:
+            print("No rain expected in the forecast period (precipitation_probability > 10% not found).")
+    except Exception as e:
+        print(f"Error inserting hours_until_rain into timeseriesdb: {e}")
+
 
 def write_sensor_data(message_list):
     client = _InfluxSingleton.get_client()

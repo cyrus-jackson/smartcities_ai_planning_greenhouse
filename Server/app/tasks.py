@@ -5,8 +5,12 @@ import threading
 import time
 import json
 import redis
+import requests
+import datetime
+
 from app.utils.config import load_config
 from app.utils.rabbitmq_helper import RabbitMQHelper
+from app.db.sqldb import insert_weather_forecast
 
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
 LOCK_EXPIRE = 60  # seconds
@@ -131,3 +135,17 @@ def long_running_task(x, y):
     finally:
         if have_lock:
             redis_client.delete(lock_id)
+
+
+
+def fetch_weather_forecast():
+    url = "https://api.open-meteo.com/v1/forecast?latitude=48.7428207&longitude=9.1012773&hourly=rain,precipitation,precipitation_probability&timezone=auto&forecast_days=1"
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        insert_weather_forecast(data)
+        tdb.insert_hours_until_rain(data)
+        print("Inserted Weather Data Successfully")
+    except Exception as e:
+        print(f"Failed to fetch weather forecast: {e}")
