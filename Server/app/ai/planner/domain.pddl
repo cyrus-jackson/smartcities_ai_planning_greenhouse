@@ -19,6 +19,7 @@
     (run_servo ?x - servo)
     (close_servo ?x - servo)
     (keep_greenhouse_comfortable)
+    (expecting_rain)
   )
 
   (:functions 
@@ -40,6 +41,7 @@
         (and (> (hours_until_rain) 30) (<= (water_tank_level) 10) (alert-high))
         (and (> (hours_until_rain) 30) (> (water_tank_level) 10) (<= (water_tank_level) 50) (alert-warning))
         (and (> (water_tank_level) 50) (no_alert))
+        (expecting_rain) ; <-- new branch
       )
 
       ;; Fan preconditions
@@ -161,6 +163,25 @@
       (close_servo ?x)
       (not (run_servo ?x))
     )
+  )
+
+  (:action expecting_rain_alert
+    :parameters ()
+    :precondition (and
+      (<= (hours_until_rain) 30)
+      (<= (water_tank_level) 10)
+    )
+    :effect (expecting_rain)
+  )
+
+  (:action expecting_rain_warning
+    :parameters ()
+    :precondition (and
+      (<= (hours_until_rain) 30)
+      (> (water_tank_level) 10)
+      (<= (water_tank_level) 50)
+    )
+    :effect (expecting_rain)
   )
 
 )

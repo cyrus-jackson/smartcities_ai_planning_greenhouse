@@ -1,9 +1,11 @@
 import pika
 import json
 import threading
+import state_constants as states
 
 from config import load_config
 from state_manager import StateManager
+
 from fan_module import FanModule
 from env_sensors import sensor_loop
 from roof_module import RoofModule
@@ -46,11 +48,14 @@ class RabbitMQClient:
                 msg = body.decode()
                 print(f"Received: {msg}")
                 actions = json.loads(msg)
-                if isinstance(actions, list):
-                    for act in actions:
-                        callback(act, self)
-                else:
-                    print("Received message is not a list of actions.")
+                print(actions)
+                plan_id = actions[states.PLAN_ID]
+                self.state_manager.update_plan(plan_id)
+                for act in actions:
+                    if act == states.PLAN_ID:
+                        continue
+                    callback(actions[act], self)
+                    
             except json.JSONDecodeError:
                 print("Received message is not valid JSON.")
         self.channel.basic_consume(queue=self.planner_queue, on_message_callback=on_message, auto_ack=True)
@@ -68,16 +73,22 @@ class RabbitMQClient:
 def invoke_action(action, client):
     print(f"Invoking action: {action}")
     # Use the pre-instantiated modules from the client
-    if action.startswith("fan_on"):
+    if action == states.FAN_ON:
         client.fan.turn_on()
-    elif action.startswith("fan_off"):
+    elif action == states.FAN_OFF:
         client.fan.turn_off()
     elif action.startswith("run_servo"):
         servo = action.split()[-1]
-        client.roof.open_roof(servo)
+        if servo == "s1":
+            client.roof.open_roof(states.RUN_ROOF_SERVO_S1)
+        elif servo == "s2":
+            client.roof.open_roof(states.RUN_ROOF_SERVO_S2)
     elif action.startswith("close_servo"):
         servo = action.split()[-1]
-        client.roof.close_roof(servo)
+        if servo == "s1":
+            client.roof.close_roof(states.CLOSE_ROOF_SERVO_S1)
+        elif servo == "s2":
+            client.roof.close_roof(states.CLOSE_ROOF_SERVO_S2)
 
 def main():
     client = RabbitMQClient()

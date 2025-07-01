@@ -1,17 +1,13 @@
 {
   "name": "all_checks_case",
   "fluents": {
-    "hours_until_rain": 40,
-    "water_tank_level": 70,
+    "hours_until_rain": 20,
+    "water_tank_level": 11,
     "temperature": 50,
     "humidity": 5
   },
   "init": [
-    "outside_environment_safe",
-    "close_servo s1",
-    "run_servo s2",
-    "fan_on"
-
+    "outside_environment_safe"
   ],
   "goals": [
     {
@@ -20,3 +16,6 @@
     }
   ]
 }
+
+
+

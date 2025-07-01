@@ -5,7 +5,6 @@ from flask import request, jsonify
 
 from .ai import pddl as ai
 from .tasks import long_running_task
-from .celery_worker import celery
 
 
 items = []
@@ -33,20 +32,3 @@ def add_item():
     return {'message': 'Item added successfully'}, 201
 
 
-
-
-@app.route('/run-task', methods=['POST'])
-def run_task():
-    data = request.get_json()
-    x = data.get('x', 0)
-    y = data.get('y', 0)
-    task = long_running_task.apply_async(args=[x, y])
-    return jsonify({"task_id": task.id}), 202
-
-@app.route('/task-status/<task_id>')
-def task_status(task_id):
-    task = celery.AsyncResult(task_id)
-    return jsonify({
-        "state": task.state,
-        "result": task.result
-    })

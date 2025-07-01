@@ -6,6 +6,7 @@ from pprint import pprint
 from .planner import pddl_transform as pt
 
 from app.db import sqldb as db
+import app.utils.state_constants as states
 
 
 def parse_enhsp_output(response_json):
@@ -18,10 +19,28 @@ def parse_enhsp_output(response_json):
         plan_steps = re.findall(r'(\d+\.\d+):\s+\(([^)]+)\)', raw_output)
         # plan_steps is now a list of tuples: [("0.0", "turn_off_fan"), ...]
 
-        if plan_steps:
-            return {step_num: f"({action})" for step_num, action in plan_steps}
-        else:
-            return False
+        # Mapping from PDDL actions to state_constants
+        action_map = {
+            "turn_on_fan": states.FAN_ON,
+            "turn_off_fan": states.FAN_OFF,
+            "open_roof s1": states.RUN_ROOF_SERVO_S1,
+            "open_roof s2": states.RUN_ROOF_SERVO_S2,
+            "close_roof s1": states.CLOSE_ROOF_SERVO_S1,
+            "close_roof s2": states.CLOSE_ROOF_SERVO_S2,
+        }
+
+        parsed = {}
+        for step_num, action in plan_steps:
+            action = action.strip()
+            
+            mapped = action_map.get(action)
+            if mapped:
+                parsed[step_num] = mapped
+            else:
+                # Keep Original
+                parsed[step_num] = action
+
+        return parsed if parsed else False
 
     except (KeyError, IndexError, TypeError):
         return False

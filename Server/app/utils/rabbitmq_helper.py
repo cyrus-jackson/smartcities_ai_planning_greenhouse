@@ -2,26 +2,21 @@ import pika
 from app.utils.config import load_config
 
 class RabbitMQHelper:
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            config = load_config()
-            rabbitmq = config["rabbitmq"]
-            cls._instance = super().__new__(cls)
-            cls._instance.connection = pika.BlockingConnection(
-                pika.ConnectionParameters(
-                    host=rabbitmq.get("host", "localhost"),
-                    port=rabbitmq.get("port", 5672),
-                    credentials=pika.PlainCredentials(
-                        rabbitmq.get("username", "guest"),
-                        rabbitmq.get("password", "guest")
-                    )
+    def __init__(self):
+        config = load_config()
+        rabbitmq = config["rabbitmq"]
+        self.connection = pika.BlockingConnection(
+            pika.ConnectionParameters(
+                host=rabbitmq.get("host", "localhost"),
+                port=rabbitmq.get("port", 5672),
+                credentials=pika.PlainCredentials(
+                    rabbitmq.get("username", "guest"),
+                    rabbitmq.get("password", "guest")
                 )
             )
-            cls._instance.channel = cls._instance.connection.channel()
-            cls._instance.queues_declared = set()
-        return cls._instance
+        )
+        self.channel = self.connection.channel()
+        self.queues_declared = set()
 
     def declare_queue(self, queue_name):
         if queue_name not in self.queues_declared:
@@ -38,3 +33,10 @@ class RabbitMQHelper:
 
     def close(self):
         self.connection.close()
+
+    # To use as a context manager (with statement)
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
