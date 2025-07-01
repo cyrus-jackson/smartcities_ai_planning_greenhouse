@@ -12,6 +12,9 @@ env.bak/
 venv.bak/ 
 watch_server.py
 
+# Configs
+Server/app/utils/config.json
+
 # dev 
 # api/run_server.py
 # api/watch_server.py
