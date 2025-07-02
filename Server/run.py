@@ -7,7 +7,6 @@ import signal
 import sys
 
 if __name__ == '__main__':
-    print("Testing")
 
     # Start the batch consumer as a managed thread
     start_rabbitmq_batch_consumer()
@@ -15,7 +14,7 @@ if __name__ == '__main__':
 
     # Schedule long_running_task to run every 20 seconds
     scheduler = BackgroundScheduler()
-    scheduler.add_job(long_running_task, 'interval', seconds=20, args=[5, 7])
+    scheduler.add_job(long_running_task, 'interval', seconds=150, args=[5, 7])
 
     # Schedule weather fetch every hour
     scheduler.add_job(fetch_weather_forecast, 'interval', hours=1)
@@ -33,5 +32,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, cleanup)
     signal.signal(signal.SIGTERM, cleanup)
 
+    # Reset all Notifications
+    reset_notifications()
     app.run()
 

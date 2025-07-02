@@ -1,5 +1,6 @@
 import app.utils.state_constants as states
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+
 import pandas as pd
 import os
 import certifi
@@ -39,7 +40,7 @@ sample_data = {
 def validate_fluents(fluents):
     for key in sample_data["fluents"]:
         if key not in fluents or fluents[key] is None:
-            fluents[key] = 1
+            fluents[key] = 30
     return fluents
 
 # Singleton pattern for InfluxDBClient3
@@ -148,22 +149,23 @@ def get_data():
 
 def insert_hours_until_rain(data):
     try:
+        required_prob = 50
         client = _InfluxSingleton.get_client()
         probabilities = data["hourly"]["precipitation_probability"]
         hours_until_rain = None
         for idx, prob in enumerate(probabilities):
-            if prob > 10:
+            if prob > required_prob:
                 hours_until_rain = idx  # hours from now
                 break
-        if hours_until_rain is not None:
-            point = (
-                Point("hours_until_rain")
-                .field("hours_until_rain", hours_until_rain)
-            )
-            client.write(database=database, record=point)
-            print(f"Inserted hours_until_rain={hours_until_rain} into timeseriesdb.")
-        else:
-            print("No rain expected in the forecast period (precipitation_probability > 10% not found).")
+        if hours_until_rain is None:
+            print(f"No rain expected in the forecast period (precipitation_probability > {required_prob}% not found). Setting it to default 100")
+            hours_until_rain = 100
+        point = (
+            Point("hours_until_rain")
+            .field("hours_until_rain", hours_until_rain)
+        )
+        client.write(database=database, record=point)
+        print(f"Inserted hours_until_rain={hours_until_rain} into timeseriesdb.")
     except Exception as e:
         print(f"Error inserting hours_until_rain into timeseriesdb: {e}")
 
@@ -195,6 +197,57 @@ def write_state_data(message):
             point = point.field(key, value)
     client.write(database=database, record=point)
 
+def get_sensor_timeseries_data(interval="1h"):
+
+
+    client = _InfluxSingleton.get_client()
+    now = datetime.now(timezone.utc)
+    if interval == "15m":
+        start = now - timedelta(minutes=15)
+    elif interval == "30m":
+        start = now - timedelta(minutes=30)
+    else:  # default to 1 hour
+        start = now - timedelta(hours=1)
+
+    # Query all metrics at once (do NOT select plan_id as a field; it's a tag)
+    query = f'''
+        SELECT *
+        FROM "greenhouse_sensors"
+        WHERE time >= '{start.isoformat()}'
+        ORDER BY time ASC
+    '''
+    print(query)
+    result = client.query(query, database=database)
+    df = result.to_pandas()
+    print(df)
+
+    # If PLAN_ID is a tag, it may appear as a column or as an index level
+    plan_id_col = states.PLAN_ID
+    if plan_id_col not in df.columns and plan_id_col in getattr(df, 'index', pd.Index([])).names:
+        # If PLAN_ID is an index level, reset index to get it as a column
+        df = df.reset_index()
+
+    result_data = {
+        "temperature": [],
+        "humidity": [],
+        "soil_moisture": [],
+        "plan_id": []
+    }
+
+    if not df.empty and "time" in df.columns:
+        for _, row in df.iterrows():
+            time_str = row["time"].strftime("%H:%M")
+            if states.TEMPERATURE in df.columns and row[states.TEMPERATURE] is not None:
+                result_data["temperature"].append({"time": time_str, "value": float(row[states.TEMPERATURE])})
+            if states.HUMIDITY in df.columns and row[states.HUMIDITY] is not None:
+                result_data["humidity"].append({"time": time_str, "value": float(row[states.HUMIDITY])})
+            if states.SOIL_MOISTURE in df.columns and row[states.SOIL_MOISTURE] is not None:
+                result_data["soil_moisture"].append({"time": time_str, "value": float(row[states.SOIL_MOISTURE])})
+            # Get plan_id from column if present, else None
+            plan_id_val = str(row[plan_id_col]) if plan_id_col in row and row[plan_id_col] is not None else None
+            result_data["plan_id"].append({"time": time_str, "value": plan_id_val})
+
+    return result_data
 
 # Singleton pattern
 _InfluxSingleton.get_client()

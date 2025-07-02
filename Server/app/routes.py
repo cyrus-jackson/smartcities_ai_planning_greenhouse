@@ -1,36 +1,21 @@
 # app/routes.py
 
 from app import app
-from flask import request, jsonify, render_template
+from flask import request, jsonify, render_template, current_app
 
 from .ai import pddl as ai
-from .tasks import long_running_task
 from app.db.sqldb import get_last_n_pddl_problems
+from app.db.timeseriesdb import get_sensor_timeseries_data
+
 
 
 items = []
 
-@app.route('/')
+@app.route('/home')
 def hello():
     text = ai.ai_fun()
     return text
 
-@app.route('/items', methods=['GET'])
-def get_items():
-    return {'items': items}
-
-@app.route('/items/<int:item_id>', methods=['GET'])
-def get_item(item_id):
-    if item_id < len(items):
-        return {'item': items[item_id]}
-    else:
-        return {'error': 'Item not found'}, 404
-
-@app.route('/items', methods=['POST'])
-def add_item():
-    item = request.get_json()
-    items.append(item)
-    return {'message': 'Item added successfully'}, 201
 
 @app.route('/plans')
 def plans_view():
@@ -39,5 +24,21 @@ def plans_view():
         domain_content = f.read()
     plans = get_last_n_pddl_problems(5)
     return render_template('plans_view.html', domain=domain_content, plans=plans)
+
+@app.route('/')
+def home():
+    return render_template('home.html')
+
+@app.route('/data', methods=['GET'])
+def get_data():
+    interval = request.args.get("interval", "1h")  # "15m", "30m", or "1h"
+    data = get_sensor_timeseries_data(interval)
+    # Optionally add notifications here
+    data["notifications"] = [{"message": "Fan turned on", "type": "success"}]
+    return jsonify(data)
+
+@app.route('/notifications', methods=['GET'])
+def get_notifications():
+    return jsonify({"notifications": ai.get_current_notifications()})
 
 

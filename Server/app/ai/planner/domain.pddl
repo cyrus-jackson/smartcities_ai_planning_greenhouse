@@ -104,6 +104,25 @@
     )
   )
 
+  (:action expecting_rain_alert
+    :parameters ()
+    :precondition (and
+      (<= (hours_until_rain) 30)
+      (<= (water_tank_level) 10)
+    )
+    :effect (expecting_rain)
+  )
+
+  (:action expecting_rain_warning
+    :parameters ()
+    :precondition (and
+      (<= (hours_until_rain) 30)
+      (> (water_tank_level) 10)
+      (<= (water_tank_level) 50)
+    )
+    :effect (expecting_rain)
+  )
+
 ;---------------------------------
 ; Fan Module
 ;---------------------------------
@@ -163,25 +182,6 @@
       (close_servo ?x)
       (not (run_servo ?x))
     )
-  )
-
-  (:action expecting_rain_alert
-    :parameters ()
-    :precondition (and
-      (<= (hours_until_rain) 30)
-      (<= (water_tank_level) 10)
-    )
-    :effect (expecting_rain)
-  )
-
-  (:action expecting_rain_warning
-    :parameters ()
-    :precondition (and
-      (<= (hours_until_rain) 30)
-      (> (water_tank_level) 10)
-      (<= (water_tank_level) 50)
-    )
-    :effect (expecting_rain)
   )
 
 )

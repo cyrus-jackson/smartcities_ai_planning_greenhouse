@@ -41,7 +41,6 @@ class StateManager:
 
     def send_state(self):
         message = json.dumps(self.state)
-        print(f"Sent state to {self.states_queue}: {self.state}")
         self.rabbitmq_client.channel.basic_publish(
             exchange='',
             routing_key=self.states_queue,

@@ -12,11 +12,13 @@ from app.utils.config import load_config
 from app.utils.rabbitmq_helper import RabbitMQHelper
 from app.db.sqldb import insert_weather_forecast
 
-redis_client = redis.StrictRedis(host='localhost', port=6379, db=0)
+redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
 LOCK_EXPIRE = 60  # seconds
 
 BATCH_SIZE = 50
 BATCH_TIMEOUT = 5  # seconds
+
+NOTIFICATIONS_KEY = "latest_notifications"
 
 class QueueConsumerThread(threading.Thread):
     def __init__(self, stop_event, queue_name, process_func, batch_mode=False):
@@ -121,9 +123,12 @@ def long_running_task(x, y):
             print("Task is already running. Skipping this run.")
             return None
         data = tdb.get_data()
-        time.sleep(5)
-        plan_id, parsed_plan = planner.insert_problem(data)
+        plan_id, parsed_plan, notifications = planner.insert_problem(data)
         print("Inserted Plan: " + str(plan_id))
+
+        # Store notifications in Redis
+        if notifications:
+            redis_client.set(NOTIFICATIONS_KEY, json.dumps(notifications))
 
         rabbitmq = load_config()["rabbitmq"]
         planner_queue = rabbitmq.get("planner_queue", "planner_queue")
@@ -136,8 +141,6 @@ def long_running_task(x, y):
         if have_lock:
             redis_client.delete(lock_id)
 
-
-
 def fetch_weather_forecast():
     url = "https://api.open-meteo.com/v1/forecast?latitude=48.7428207&longitude=9.1012773&hourly=rain,precipitation,precipitation_probability&timezone=auto&forecast_days=1"
     try:
@@ -149,3 +152,6 @@ def fetch_weather_forecast():
         print("Inserted Weather Data Successfully")
     except Exception as e:
         print(f"Failed to fetch weather forecast: {e}")
+
+def reset_notifications():
+     redis_client.delete(NOTIFICATIONS_KEY)
