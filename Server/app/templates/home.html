@@ -24,6 +24,146 @@
             position: relative;
             height: 260px;
         }
+        .water-card {
+            position: relative;
+            height: 180px;
+            overflow: hidden;
+            border-radius: 1.5rem;
+            background: #e9ecef;
+            border: 4px solid #007bff;
+            transition: border-color 0.5s;
+        }
+        .water-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(180deg, #4fc3f7 60%, #1976d2 100%);
+            transition: height 1s cubic-bezier(.4,2,.6,1), background 0.5s;
+            z-index: 1;
+        }
+        .water-label {
+            position: absolute;
+            width: 100%;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 2px 8px #1976d2, 0 0 2px #1976d2;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .water-title {
+            position: absolute;
+            width: 100%;
+            bottom: 10px;
+            left: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            z-index: 2;
+            text-shadow: 0 2px 8px #1976d2, 0 0 2px #1976d2;
+            letter-spacing: 1px;
+        }
+        .water-card.low {
+            border-color: #dc3545 !important;
+        }
+        .water-card.medium {
+            border-color: #ffc107 !important;
+        }
+        .water-card.high {
+            border-color: #198754 !important;
+        }
+        .water-card.low .water-fill {
+            background: linear-gradient(180deg, #ffb3b3 60%, #dc3545 100%);
+        }
+        .water-card.medium .water-fill {
+            background: linear-gradient(180deg, #ffe066 60%, #ffc107 100%);
+        }
+        .water-card.high .water-fill {
+            background: linear-gradient(180deg, #63e6be 60%, #198754 100%);
+        }
+        .rain-card {
+            background: linear-gradient(180deg, #e0f7fa 60%, #81d4fa 100%);
+            border: 4px solid #0dcaf0;
+            border-radius: 1.5rem;
+            min-height: 180px;
+            height: 180px;
+            transition: border-color 0.5s;
+            position: relative;
+        }
+        .rain-label {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #0d6efd;
+            margin-top: 40px;
+            margin-bottom: 10px;
+            z-index: 2;
+        }
+        .rain-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1976d2;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            z-index: 2;
+        }
+        .state-card {
+            background: #f8fafc;
+            /* No border or border-radius here */
+            min-height: 180px;
+            height: 180px;
+            transition: border-color 0.5s;
+            position: relative;
+        }
+        .state-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #495057;
+            letter-spacing: 1px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        #stateList {
+            width: 100%;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+        .state-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Add this */
+            background: #fff;
+            border-radius: 1.2rem;
+            padding: 0.3em 0.8em;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 0.25em;
+            border: 1px solid #e3e8ef;
+            box-shadow: 0 1px 3px #e3e8ef;
+            transition: background 0.2s, box-shadow 0.2s;
+            gap: 0.5em;
+        }
+        .state-icon {
+            font-size: 1.3rem;
+            margin-right: 0.4em;
+            filter: drop-shadow(0 1px 2px #b2f2e5);
+        }
+        .card,
+        .water-card,
+        .rain-card,
+        .state-card {
+            min-height: 340px;
+            height: 340px;
+            /* Ensures all cards are the same size */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
     </style>
 </head>
 <body>
@@ -38,24 +178,9 @@
             <div id="notificationArea" class="notification-area"></div>
         </div>
     </div>
-    <div class="row g-4">
+    <div class="row g-4 mb-4">
         <div class="col-md-4">
-            <div class="card border-primary shadow-sm">
-                <div class="card-header bg-primary text-white card-title d-flex justify-content-between align-items-center">
-                    <span>Temperature (&deg;C)</span>
-                    <div class="btn-group btn-group-sm" role="group" aria-label="Temperature Interval">
-                        <button type="button" class="btn btn-light" onclick="updateChart('temperature', '15m', this)">15min</button>
-                        <button type="button" class="btn btn-light" onclick="updateChart('temperature', '30m', this)">30min</button>
-                        <button type="button" class="btn btn-light active" onclick="updateChart('temperature', '1h', this)">1h</button>
-                    </div>
-                </div>
-                <div class="card-body bg-light chart-container">
-                    <canvas id="temperatureChart"></canvas>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-success shadow-sm">
+            <div class="card border-success shadow-sm h-100">
                 <div class="card-header bg-success text-white card-title d-flex justify-content-between align-items-center">
                     <span>Humidity (%)</span>
                     <div class="btn-group btn-group-sm" role="group" aria-label="Humidity Interval">
@@ -70,7 +195,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card border-warning shadow-sm">
+            <div class="card border-warning shadow-sm h-100">
                 <div class="card-header bg-warning text-dark card-title d-flex justify-content-between align-items-center">
                     <span>Soil Moisture (%)</span>
                     <div class="btn-group btn-group-sm" role="group" aria-label="Soil Moisture Interval">
@@ -84,11 +209,52 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-4">
+            <div class="card border-primary shadow-sm h-100">
+                <div class="card-header bg-primary text-white card-title d-flex justify-content-between align-items-center">
+                    <span>Temperature (&deg;C)</span>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Temperature Interval">
+                        <button type="button" class="btn btn-light" onclick="updateChart('temperature', '15m', this)">15min</button>
+                        <button type="button" class="btn btn-light" onclick="updateChart('temperature', '30m', this)">30min</button>
+                        <button type="button" class="btn btn-light active" onclick="updateChart('temperature', '1h', this)">1h</button>
+                    </div>
+                </div>
+                <div class="card-body bg-light chart-container">
+                    <canvas id="temperatureChart"></canvas>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
-<!-- Toast container -->
-<div aria-live="polite" aria-atomic="true" class="position-fixed top-0 end-0 p-3" style="z-index: 1080">
-    <div id="toastArea"></div>
+    <div class="row g-4 align-items-stretch mb-4">
+        <div class="col-md-4">
+            <div id="waterLevelCard" class="card shadow-sm text-center water-card h-100">
+                <div class="water-fill" id="waterCardFill"></div>
+                <div class="water-label" id="waterCardLabel">--%</div>
+                <div class="water-title">Water Tank Level</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div id="rainCard" class="card shadow-sm text-center rain-card h-100 d-flex flex-column justify-content-center align-items-center">
+                <div class="rain-label" id="rainCardLabel">--</div>
+                <div class="rain-title">Hours Until Rain</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div id="stateCard" class="card shadow-sm state-card h-100">
+                <div class="card-header bg-success text-white card-title">
+                    Current States
+                </div>
+                <div class="card-body bg-light w-100 d-flex flex-column align-items-center" style="justify-content: flex-start;">
+                    <ul id="stateList" class="list-group list-group-flush w-100"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast container -->
+    <div aria-live="polite" aria-atomic="true" class="position-fixed top-0 end-0 p-3" style="z-index: 1080">
+        <div id="toastArea"></div>
+    </div>
 </div>
 <script>
     let chartRefs = {
@@ -274,10 +440,109 @@
         }
     }
 
+    async function fetchWaterLevel() {
+        return Math.floor(Math.random() * 101);
+    }
+
+    function updateWaterLevelCard(level) {
+        const fill = document.getElementById('waterCardFill');
+        const label = document.getElementById('waterCardLabel');
+        const card = document.getElementById('waterLevelCard');
+
+        // Animate fill
+        fill.style.height = `${level}%`;
+        label.textContent = `${level}%`;
+
+        // Remove previous color classes
+        card.classList.remove('low', 'medium', 'high');
+
+        // Add color class based on level
+        if (level >= 70) {
+            card.classList.add('high');
+        } else if (level >= 40) {
+            card.classList.add('medium');
+        } else {
+            card.classList.add('low');
+        }
+    }
+
+    // Poll and update water level every 10 seconds
+    async function pollWaterLevel() {
+        const level = await fetchWaterLevel();
+        updateWaterLevelCard(level);
+    }
+    document.addEventListener('DOMContentLoaded', pollWaterLevel);
+    setInterval(pollWaterLevel, 10000);
+
     document.addEventListener('DOMContentLoaded', fetchNotifications);
     setInterval(fetchNotifications, 5000);
     document.addEventListener('DOMContentLoaded', renderCharts);
 
+    async function fetchHoursUntilRain() {
+        return Math.floor(Math.random() * 25); // 0-24 hours
+    }
+
+    function updateRainCard(hours) {
+        const label = document.getElementById('rainCardLabel');
+        label.textContent = hours !== null && hours !== undefined ? hours : '--';
+    }
+
+    async function pollRainCard() {
+        const hours = await fetchHoursUntilRain();
+        updateRainCard(hours);
+    }
+    document.addEventListener('DOMContentLoaded', pollRainCard);
+    setInterval(pollRainCard, 10000);
+
+    async function fetchCurrentStates() {
+
+        const allStates = [
+            { key: "fan_on", label: "Fan On", icon: "🌀" },
+            { key: "fan_off", label: "Fan Off", icon: "🛑" },
+            { key: "alert-warning", label: "Warning", icon: "⚠️" },
+            { key: "alert-high", label: "High Alert", icon: "🚨" },
+            { key: "no_alert", label: "No Alert", icon: "✅" },
+            { key: "expecting_rain", label: "Expecting Rain", icon: "🌧️" },
+            { key: "run_servo", label: "Roof Open", icon: "🔓" },
+            { key: "close_servo", label: "Roof Closed", icon: "🔒" },
+            { key: "outside_environment_safe", label: "Safe Outside", icon: "🌱" }
+        ];
+        // Randomly pick some for demo
+        return allStates.filter(() => Math.random() > 0.5);
+    }
+
+    function updateStateCard(states) {
+        const stateList = document.getElementById('stateList');
+        stateList.innerHTML = "";
+        if (!states || states.length === 0) {
+            stateList.innerHTML = '<li class="list-group-item text-muted bg-transparent border-0">No states</li>';
+            return;
+        }
+        states.forEach(state => {
+            let dotColor = "#adb5bd";
+            if (state.key.includes("on") || state.key.includes("open")) dotColor = "#198754";
+            if (state.key.includes("off") || state.key.includes("close")) dotColor = "#dc3545";
+            if (state.key.includes("alert")) dotColor = "#ffc107";
+            if (state.key.includes("rain")) dotColor = "#0dcaf0";
+            if (state.key.includes("safe")) dotColor = "#20c997";
+            stateList.innerHTML += `
+                <li class="state-list-item list-group-item bg-transparent">
+                    <span>
+                        <span class="state-icon">${state.icon}</span>
+                        ${state.label}
+                    </span>
+                    <span style="width:12px;height:12px;display:inline-block;border-radius:50%;background:${dotColor};"></span>
+                </li>
+            `;
+        });
+    }
+
+    async function pollStateCard() {
+        const states = await fetchCurrentStates();
+        updateStateCard(states);
+    }
+    document.addEventListener('DOMContentLoaded', pollStateCard);
+    setInterval(pollStateCard, 10000);
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
