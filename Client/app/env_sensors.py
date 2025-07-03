@@ -18,8 +18,11 @@ class TemperatureSensor:
     
 class SoilMoistureSensor:
     def get_reading(self):
-        # Simulate reading temperature (constant value for now)
         return 38  # Celsius
+    
+class WaterTankLevelSensor:
+    def get_reading(self):
+        return 85  # Depth Logic
 
 def sensor_loop(rabbitmq_client, interval=10):
     # Create a new connection and channel for this thread
@@ -38,6 +41,7 @@ def sensor_loop(rabbitmq_client, interval=10):
     humidity_sensor = HumiditySensor()
     temperature_sensor = TemperatureSensor()
     soil_moisture_sensor = SoilMoistureSensor()
+    water_level_sensor = WaterTankLevelSensor()
     state_manager = rabbitmq_client.state_manager
 
     while True:
@@ -50,6 +54,7 @@ def sensor_loop(rabbitmq_client, interval=10):
             states.HUMIDITY: humidity,
             states.TEMPERATURE: temperature,
             states.SOIL_MOISTURE: soil_moisture,
+            states.WATER_LEVEL: water_level_sensor,
             states.PLAN_ID: plan_id
         }
         print(f"Sending sensor data: {message}")

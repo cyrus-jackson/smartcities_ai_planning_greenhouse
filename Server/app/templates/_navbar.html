@@ -1,0 +1,32 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-success mb-4">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold fs-3 d-flex align-items-center gap-2" href="/">
+      <span class="animate__animated animate__pulse animate__infinite" style="display:inline-block;">
+        <svg width="32" height="32" fill="currentColor" class="bi bi-flower2 text-warning" viewBox="0 0 16 16">
+          <path d="M8 6.236V2.5a.5.5 0 0 1 1 0v3.736a2.5 2.5 0 1 1-1 0z"/>
+          <path d="M8 9.764v3.736a.5.5 0 0 1-1 0V9.764a2.5 2.5 0 1 1 1 0z"/>
+          <path d="M6.236 8H2.5a.5.5 0 0 1 0-1h3.736a2.5 2.5 0 1 1 0 1z"/>
+          <path d="M9.764 8h3.736a.5.5 0 0 1 0 1h-3.736a2.5 2.5 0 1 1 0-1z"/>
+          <circle cx="8" cy="8" r="2.5" fill="#198754"/>
+        </svg>
+      </span>
+      <span>Smart Greenhouse</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link {% if request.path == '/' %}active{% endif %}" aria-current="page" href="/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.path.startswith('/plans') %}active{% endif %}" href="/plans">Plans</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.path.startswith('/control') %}active{% endif %}" href="/control">Control Panel</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

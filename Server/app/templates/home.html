@@ -167,15 +167,24 @@
     </style>
 </head>
 <body>
+{% include "_navbar.html" %}
 <div class="container-fluid py-4">
-    <div class="row mb-4">
-        <div class="col-12 text-center">
-            <span class="dashboard-title text-success">Smart Greenhouse</span>
-        </div>
-    </div>
     <div class="row mb-3">
         <div class="col-12">
             <div id="notificationArea" class="notification-area"></div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-12">
+            <div id="waterLevelProgressMsg" class="fw-semibold mb-1 text-center"></div>
+            <div class="progress" style="height: 28px;">
+                <div id="waterLevelProgressBar"
+                     class="progress-bar progress-bar-striped progress-bar-animated"
+                     role="progressbar"
+                     style="width: 0%; font-size: 1.1rem;">
+                    0%
+                </div>
+            </div>
         </div>
     </div>
     <div class="row g-4 mb-4">
@@ -448,10 +457,14 @@
         const fill = document.getElementById('waterCardFill');
         const label = document.getElementById('waterCardLabel');
         const card = document.getElementById('waterLevelCard');
+        const progressBar = document.getElementById('waterLevelProgressBar');
+        const progressMsg = document.getElementById('waterLevelProgressMsg');
 
         // Animate fill
         fill.style.height = `${level}%`;
         label.textContent = `${level}%`;
+        progressBar.style.width = `${level}%`;
+        progressBar.textContent = `${level}%`;
 
         // Remove previous color classes
         card.classList.remove('low', 'medium', 'high');
@@ -459,10 +472,13 @@
         // Add color class based on level
         if (level >= 70) {
             card.classList.add('high');
+            progressMsg.textContent = "Water level is high";
         } else if (level >= 40) {
             card.classList.add('medium');
+            progressMsg.textContent = "Water level is medium";
         } else {
             card.classList.add('low');
+            progressMsg.textContent = "Water level is low";
         }
     }
 
@@ -470,9 +486,30 @@
     async function pollWaterLevel() {
         const level = await fetchWaterLevel();
         updateWaterLevelCard(level);
+        updateWaterLevelProgress(level);
     }
     document.addEventListener('DOMContentLoaded', pollWaterLevel);
     setInterval(pollWaterLevel, 10000);
+
+    function updateWaterLevelProgress(level) {
+        const bar = document.getElementById('waterLevelProgressBar');
+        const msg = document.getElementById('waterLevelProgressMsg');
+        let barClass = 'bg-primary';
+        let text = `Water Level: ${level}%`;
+
+        if (level <= 10) {
+            barClass = 'bg-danger';
+            text = 'Warning: Water level critically low!';
+        } else if (level < 30) {
+            barClass = 'bg-warning text-dark';
+            text = 'Caution: Water level low!';
+        }
+
+        bar.className = `progress-bar progress-bar-striped progress-bar-animated ${barClass}`;
+        bar.style.width = `${level}%`;
+        bar.textContent = `${level}%`;
+        msg.textContent = text;
+    }
 
     document.addEventListener('DOMContentLoaded', fetchNotifications);
     setInterval(fetchNotifications, 5000);

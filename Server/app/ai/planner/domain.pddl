@@ -30,7 +30,7 @@
   )
 
 ;-------------------------------
-; Meta-goal Action
+; Meta Goal Action
 ;-------------------------------
 
   (:action keep_greenhouse_comfortable
@@ -41,7 +41,7 @@
         (and (> (hours_until_rain) 30) (<= (water_tank_level) 10) (alert-high))
         (and (> (hours_until_rain) 30) (> (water_tank_level) 10) (<= (water_tank_level) 50) (alert-warning))
         (and (> (water_tank_level) 50) (no_alert))
-        (expecting_rain) ; <-- new branch
+        (expecting_rain) 
       )
 
       ;; Fan preconditions

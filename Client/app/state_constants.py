@@ -14,6 +14,7 @@ CLOSE_ROOF_SERVO_S2 = "close_servo s2"
 HUMIDITY = "humidity"
 TEMPERATURE = "temperature"
 SOIL_MOISTURE = "soil_moisture"
+WATER_LEVEL = "water_level"
 
 
 
