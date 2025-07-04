@@ -4,7 +4,7 @@ from app import app
 from flask import request, jsonify, render_template, current_app
 
 from .ai import pddl as ai
-from app.db.sqldb import get_last_n_pddl_problems
+from app.db.sqldb import get_last_n_pddl_problems, get_recent_weather_forecast
 from app.db.timeseriesdb import get_sensor_timeseries_data
 
 
@@ -34,12 +34,16 @@ def plans_view():
 def get_data():
     interval = request.args.get("interval", "1h")  # "15m", "30m", or "1h"
     data = get_sensor_timeseries_data(interval)
+    data['weather'] = get_recent_weather_forecast()
     data["notifications"] = [{"message": "Fan turned on", "type": "success"}]
     return jsonify(data)
 
 @app.route('/notifications', methods=['GET'])
 def get_notifications():
-    return jsonify({"notifications": ai.get_current_notifications()})
+    return_data = {}
+    return_data["notifications"] = ai.get_current_notifications()
+    return_data["currentStates"] = ai.get_current_states()
+    return jsonify(return_data)
 
 @app.route('/control', methods=['GET', 'POST'])
 def control_panel():

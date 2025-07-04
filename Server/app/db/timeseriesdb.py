@@ -179,6 +179,7 @@ def write_sensor_data(message_list):
             .field(states.HUMIDITY, message[states.HUMIDITY])
             .field(states.TEMPERATURE, message[states.TEMPERATURE])
             .field(states.SOIL_MOISTURE, message[states.SOIL_MOISTURE])
+            .field(states.WATER_LEVEL, message[states.WATER_LEVEL])
         )
         # if message.get("plan_id") is not None:
         point = point.tag(states.PLAN_ID, message[states.PLAN_ID])
@@ -198,7 +199,6 @@ def write_state_data(message):
     client.write(database=database, record=point)
 
 def get_sensor_timeseries_data(interval="1h"):
-
 
     client = _InfluxSingleton.get_client()
     now = datetime.now(timezone.utc)
@@ -231,6 +231,7 @@ def get_sensor_timeseries_data(interval="1h"):
         "temperature": [],
         "humidity": [],
         "soil_moisture": [],
+        "water_level": [],
         "plan_id": []
     }
 
@@ -243,6 +244,8 @@ def get_sensor_timeseries_data(interval="1h"):
                 result_data["humidity"].append({"time": time_str, "value": float(row[states.HUMIDITY])})
             if states.SOIL_MOISTURE in df.columns and row[states.SOIL_MOISTURE] is not None:
                 result_data["soil_moisture"].append({"time": time_str, "value": float(row[states.SOIL_MOISTURE])})
+            if states.WATER_LEVEL in df.columns and row[states.WATER_LEVEL] is not None:
+                result_data["water_level"].append({"time": time_str, "value": float(row[states.WATER_LEVEL])}) 
             # Get plan_id from column if present, else None
             plan_id_val = str(row[plan_id_col]) if plan_id_col in row and row[plan_id_col] is not None else None
             result_data["plan_id"].append({"time": time_str, "value": plan_id_val})

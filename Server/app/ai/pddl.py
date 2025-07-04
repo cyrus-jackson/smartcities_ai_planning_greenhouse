@@ -4,7 +4,6 @@ import os
 import re
 import json
 import redis
-from pprint import pprint
 from .planner import pddl_transform as pt
 
 from app.db import sqldb as db
@@ -14,9 +13,17 @@ from app.utils.state_constants import NOTIFICATIONS
 # Initialize Redis client here
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
 NOTIFICATIONS_KEY = "latest_notifications"
+CURRENT_STATES = "current_states"
+
 
 def get_current_notifications():
     data = redis_client.get(NOTIFICATIONS_KEY)
+    if data:
+        return json.loads(data)
+    return []
+
+def get_current_states():
+    data = redis_client.get(CURRENT_STATES)
     if data:
         return json.loads(data)
     return []

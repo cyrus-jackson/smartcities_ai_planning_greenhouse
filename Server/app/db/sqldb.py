@@ -142,3 +142,27 @@ def insert_weather_forecast(data):
             cur.close()
         if conn:
             conn.close()
+
+def get_recent_weather_forecast():
+    try:
+        conn = psycopg2.connect(conn_str)
+        cur = conn.cursor()
+        select_query = """
+            SELECT data FROM weather_forecast ORDER BY ID DESC LIMIT 1
+        """
+        cur.execute(select_query)
+        row = cur.fetchone()
+        if row:
+            try:
+                return row[0]
+            except Exception:
+                print(f"Error parsing weather forecast: {e}")
+                return {}
+    except Exception as e:
+        print(f"Error selecting weather forecast: {e}")
+        return {}
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()

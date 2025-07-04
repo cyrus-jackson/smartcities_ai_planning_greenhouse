@@ -19,6 +19,7 @@ BATCH_SIZE = 50
 BATCH_TIMEOUT = 5  # seconds
 
 NOTIFICATIONS_KEY = "latest_notifications"
+CURRENT_STATES = "current_states"
 
 class QueueConsumerThread(threading.Thread):
     def __init__(self, stop_event, queue_name, process_func, batch_mode=False):
@@ -90,6 +91,7 @@ def process_state_message(msg):
     try:
         state_dict = json.loads(msg)
         tdb.write_state_data(state_dict)
+        redis_client.set(CURRENT_STATES, msg)
     except Exception as e:
         print(f"Error processing state message: {e}")
 

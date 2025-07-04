@@ -48,13 +48,14 @@ def sensor_loop(rabbitmq_client, interval=10):
         humidity = humidity_sensor.get_reading()
         temperature = temperature_sensor.get_reading()
         soil_moisture = soil_moisture_sensor.get_reading()
+        water_level = water_level_sensor.get_reading()
         state = state_manager.get_state()
         plan_id = state.get(states.PLAN_ID, None)
         message = {
             states.HUMIDITY: humidity,
             states.TEMPERATURE: temperature,
             states.SOIL_MOISTURE: soil_moisture,
-            states.WATER_LEVEL: water_level_sensor,
+            states.WATER_LEVEL: water_level,
             states.PLAN_ID: plan_id
         }
         print(f"Sending sensor data: {message}")
