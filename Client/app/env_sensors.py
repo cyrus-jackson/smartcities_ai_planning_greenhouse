@@ -12,10 +12,15 @@ class HumiditySensor:
         return 55  # percent
     
 class SoilMoistureSensor:
+    def __init__(self, analog_port=0):
+        print("Ok")
+
     def get_reading(self):
         return 38  # Celsius
     
 class WaterTankLevelSensor:
+    def __init__(self, digital_port=4, tank_height=100):
+        print("ok")
     def get_reading(self):
         return 10  # Depth Logic
 
