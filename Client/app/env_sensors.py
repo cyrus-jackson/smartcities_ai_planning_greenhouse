@@ -3,9 +3,10 @@ import json
 import pika
 
 import state_constants as states
-from config import load_config, TEMPERATURE_GPIO
+from config import load_config, TEMPERATURE_GPIO, WATER_TANK_GPIO, WATER_TANK_HEIGHT
 
 from temperature_sensor import TemperatureSensor
+from water_tank_level_sensor import WaterTankLevelSensor
 
 class HumiditySensor:
     def get_reading(self):
@@ -17,12 +18,6 @@ class SoilMoistureSensor:
 
     def get_reading(self):
         return 38  # Celsius
-    
-class WaterTankLevelSensor:
-    def __init__(self, digital_port=4, tank_height=100):
-        print("ok")
-    def get_reading(self):
-        return 10  # Depth Logic
 
 def sensor_loop(rabbitmq_client, interval=10):
     """
@@ -48,7 +43,7 @@ def sensor_loop(rabbitmq_client, interval=10):
     humidity_sensor = HumiditySensor()
     temperature_sensor = TemperatureSensor(analog_port=TEMPERATURE_GPIO)  # A0
     soil_moisture_sensor = SoilMoistureSensor() 
-    water_level_sensor = WaterTankLevelSensor()
+    water_level_sensor = WaterTankLevelSensor(digital_port=WATER_TANK_GPIO, tank_height=WATER_TANK_HEIGHT)  # D4, 100cm tank
     
     state_manager = rabbitmq_client.state_manager
 

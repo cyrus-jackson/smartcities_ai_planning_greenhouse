@@ -4,6 +4,11 @@ import os
 # A0
 TEMPERATURE_GPIO = 0
 
+# D4
+WATER_TANK_GPIO = 4
+# In Centimeters
+WATER_TANK_HEIGHT = 100
+
 DEFAULT_CONFIG = {
     "rabbitmq": {
         "host": os.environ.get("RABBITMQ_HOST", "localhost"),
