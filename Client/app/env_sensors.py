@@ -3,10 +3,11 @@ import json
 import pika
 
 import state_constants as states
-from config import load_config, TEMPERATURE_GPIO, WATER_TANK_GPIO, WATER_TANK_HEIGHT
+from config import load_config, TEMPERATURE_GPIO, WATER_TANK_GPIO, WATER_TANK_HEIGHT, SOIL_MOISTURE_GPIO
 
 from temperature_sensor import TemperatureSensor
 from water_tank_level_sensor import WaterTankLevelSensor
+from soil_moisture_sensor import SoilMoistureSensor
 
 class HumiditySensor:
     def get_reading(self):
@@ -42,7 +43,7 @@ def sensor_loop(rabbitmq_client, interval=10):
 
     humidity_sensor = HumiditySensor()
     temperature_sensor = TemperatureSensor(analog_port=TEMPERATURE_GPIO)  # A0
-    soil_moisture_sensor = SoilMoistureSensor() 
+    soil_moisture_sensor = SoilMoistureSensor(analog_port=SOIL_MOISTURE_GPIO) # A1
     water_level_sensor = WaterTankLevelSensor(digital_port=WATER_TANK_GPIO, tank_height=WATER_TANK_HEIGHT)  # D4, 100cm tank
     
     state_manager = rabbitmq_client.state_manager
@@ -112,7 +113,7 @@ def test_all_sensors():
     
     # Test Soil Moisture Sensor
     print("3. Testing Soil Moisture Sensor (A1):")
-    soil_sensor = SoilMoistureSensor(analog_port=1)
+    soil_sensor = SoilMoistureSensor(analog_port=SOIL_MOISTURE_GPIO)
     for i in range(3):
         moisture = soil_sensor.get_reading()
         print(f"   Reading {i+1}: {moisture}%")
@@ -121,7 +122,7 @@ def test_all_sensors():
     
     # Test Water Level Sensor
     print("4. Testing Water Level Sensor (D4):")
-    water_sensor = WaterTankLevelSensor(digital_port=4, tank_height=100)
+    water_sensor = WaterTankLevelSensor(digital_port=WATER_TANK_GPIO, tank_height=WATER_TANK_HEIGHT)
     for i in range(3):
         level = water_sensor.get_reading()
         distance = water_sensor.get_distance()
