@@ -14,7 +14,7 @@ class HumiditySensor:
         return 55  # percent
     
 
-def sensor_loop(rabbitmq_client, interval=10):
+def sensor_loop(rabbitmq_client, interval=5):
     """
     Main sensor loop that reads all sensors and publishes data to RabbitMQ
     
@@ -49,10 +49,10 @@ def sensor_loop(rabbitmq_client, interval=10):
     while True:
         try:
             # Read all sensors
-            humidity = humidity_sensor.get_reading()
-            temperature = temperature_sensor.get_reading()
-            soil_moisture = soil_moisture_sensor.get_reading()
-            water_level = water_level_sensor.get_reading()
+            humidity = float(humidity_sensor.get_reading())
+            temperature = float(temperature_sensor.get_reading())
+            soil_moisture = float(soil_moisture_sensor.get_reading())
+            water_level = float(water_level_sensor.get_reading())
             
             # Get current state and plan ID
             state = state_manager.get_state()
