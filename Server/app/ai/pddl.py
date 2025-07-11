@@ -14,6 +14,7 @@ from app.utils.state_constants import NOTIFICATIONS
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
 NOTIFICATIONS_KEY = "latest_notifications"
 CURRENT_STATES = "current_states"
+RAIN_HOURS = "rain_hours"
 
 
 def get_current_notifications():
@@ -28,24 +29,39 @@ def get_current_states():
         return json.loads(data)
     return []
 
+def get_rain_hours():
+    data = redis_client.get(RAIN_HOURS)
+    if data:
+        return json.loads(data)
+    return []
+
+def get_water_tank_level():
+    data = redis_client.get(states.WATER_LEVEL)
+    if data:
+        return json.loads(data)
+    return []
+
 def process_notification_actions(action, fluents):
     notif_types = {
-        "issue_warning": "warning",
-        "issue_high_alert": "danger",
-        "expecting_rain_alert": "info",
-        "expecting_rain_warning": "warning"
+        "issue_no_alert": ["success", "Water Tank has enough water"],
+        "issue_warning": ["warning", "Water Tank Level is low. Rain is not expected soon"],
+        "issue_high_alert": ["danger", "Fill the Water Tank immediately. Rain is not expected soon"],
+        "expecting_rain_alert": ["info", "Rain is expected. Do not fill the tank"],
+        "expecting_rain_warning": ["warning", "Water Tank Level is low. Rain is expected soon"]
     }
     if action in notif_types:
-        message = action.replace("_", " ").capitalize()
+        message = notif_types[action][1]
 
         if fluents and "hours_until_rain" in fluents:
-            message += f" (hours_until_rain: {fluents['hours_until_rain']})"
-        notif_type = notif_types[action]
+            message += f" (Rain in: {int(fluents['hours_until_rain'])} hours)"
+        notif_type = notif_types[action][0]
         
         return {
             "message": message,
             "type": notif_type
         }
+    print(fluents)
+    redis_client.set(states.WATER_LEVEL, fluents[states.WATER_LEVEL])
     return None
 
 def parse_enhsp_output(response_json, fluents):

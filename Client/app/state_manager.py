@@ -15,7 +15,7 @@ class StateManager:
         self.states_queue = states_queue
 
     def update_state(self, key):
-        print("Updated state here: {self.state}")
+        print(f"Updated state here: {self.state}")
         # Validation: Only allow one state in each mutually exclusive group to be 1
         for group in self._MUTUALLY_EXCLUSIVE:
             if key in group:

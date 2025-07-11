@@ -20,6 +20,8 @@ BATCH_TIMEOUT = 5  # seconds
 
 NOTIFICATIONS_KEY = "latest_notifications"
 CURRENT_STATES = "current_states"
+RAIN_HOURS = "rain_hours"
+
 
 class QueueConsumerThread(threading.Thread):
     def __init__(self, stop_event, queue_name, process_func, batch_mode=False):
@@ -131,6 +133,8 @@ def long_running_task(x, y):
         # Store notifications in Redis
         if notifications:
             redis_client.set(NOTIFICATIONS_KEY, json.dumps(notifications))
+            
+        redis_client.set(RAIN_HOURS, json.dumps(data['fluents']['hours_until_rain']))
 
         rabbitmq = load_config()["rabbitmq"]
         planner_queue = rabbitmq.get("planner_queue", "planner_queue")

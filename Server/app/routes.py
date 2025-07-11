@@ -5,7 +5,7 @@ from flask import request, jsonify, render_template, current_app
 
 from .ai import pddl as ai
 from app.db.sqldb import get_last_n_pddl_problems, get_recent_weather_forecast
-from app.db.timeseriesdb import get_sensor_timeseries_data
+from app.db.timeseriesdb import get_sensor_timeseries_data, get_avg_tank_level_mean
 
 
 
@@ -43,6 +43,8 @@ def get_notifications():
     return_data = {}
     return_data["notifications"] = ai.get_current_notifications()
     return_data["currentStates"] = ai.get_current_states()
+    return_data["rainTime"] = ai.get_rain_hours()
+    return_data["waterLevel"] = ai.get_water_tank_level()
     return jsonify(return_data)
 
 @app.route('/control', methods=['GET', 'POST'])

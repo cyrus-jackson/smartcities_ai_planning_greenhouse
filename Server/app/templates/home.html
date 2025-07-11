@@ -252,9 +252,9 @@
                 <div class="card-header bg-info text-white card-title d-flex justify-content-between align-items-center">
                     <span>Water Level (%)</span>
                     <div class="btn-group btn-group-sm" role="group" aria-label="Water Level Interval">
-                        <button type="button" class="btn btn-light" onclick="updateChart('water_level', '15m', this)">15min</button>
-                        <button type="button" class="btn btn-light" onclick="updateChart('water_level', '30m', this)">30min</button>
-                        <button type="button" class="btn btn-light active" onclick="updateChart('water_level', '1h', this)">1h</button>
+                        <button type="button" class="btn btn-light" onclick="updateChart('water_tank_level', '15m', this)">15min</button>
+                        <button type="button" class="btn btn-light" onclick="updateChart('water_tank_level', '30m', this)">30min</button>
+                        <button type="button" class="btn btn-light active" onclick="updateChart('water_tank_level', '1h', this)">1h</button>
                     </div>
                 </div>
                 <div class="card-body bg-light chart-container">
@@ -310,17 +310,19 @@
         temperature: null,
         humidity: null,
         soil_moisture: null,
-        water_level: null
+        water_tank_level: null
     };
     let currentIntervals = {
         temperature: '1h',
         humidity: '1h',
         soil_moisture: '1h',
-        water_level: '1h'
+        water_tank_level: '1h'
     };
     let lastNotificationMsg = null;
     let globalCurrentStates = null;
     let globalSensorData = null;
+    let globalRainHours = null;
+    let globalWaterTankLevel = null;
 
     async function fetchSensorData(interval) {
         const resp = await fetch(`/data?interval=${interval}`);
@@ -366,11 +368,23 @@
                 }
             });
         }
+        
         // Update current states
         if(globalCurrentStates == null || globalCurrentStates != data.currentStates) {
             globalCurrentStates = data.currentStates;
             updateStateCard(await fetchCurrentStates());
             
+        }
+        // Update Rain Hours
+        if(globalRainHours == null || globalRainHours != data.rainTime) {
+            globalRainHours = data.rainTime;
+            updateRainCard(globalRainHours);
+        }
+        // Update Water Tank Level
+        if(globalWaterTankLevel == null || globalWaterTankLevel != data.waterLevel) {
+            globalWaterTankLevel = data.waterLevel;
+            updateWaterLevelCard(globalWaterTankLevel, data.notifications);
+            updateWaterLevelProgress(globalWaterTankLevel, data.notifications);
         }
     }
 
@@ -441,12 +455,12 @@
     async function renderCharts() {
         // Fetch data only once
         globalSensorData = await fetchSensorData(currentIntervals.temperature);
-
+        console.log(globalSensorData)
         // Pass the data to each chart update
         await updateChart('temperature', currentIntervals.temperature, null, globalSensorData);
         await updateChart('humidity', currentIntervals.humidity, null, globalSensorData);
         await updateChart('soil_moisture', currentIntervals.soil_moisture, null, globalSensorData);
-        await updateChart('water_level', currentIntervals.water_level, null, globalSensorData);
+        await updateChart('water_tank_level', currentIntervals.water_tank_level, null, globalSensorData);
 
         // Render weather chart
         if (globalSensorData.weather) {
@@ -488,13 +502,13 @@
             planColor = 'rgba(220,53,69,1)';
             yLabel = 'Soil Moisture (%)';
             dataArr = data.soil_moisture;
-        } else if (metric === 'water_level') {
+        } else if (metric === 'water_tank_level') {
             ctx = document.getElementById('waterLevelChart').getContext('2d');
             label = 'Water Level';
             color = 'rgba(13,202,240,1)';
             planColor = 'rgba(220,53,69,1)';
             yLabel = 'Water Level (%)';
-            dataArr = data.water_level || [];
+            dataArr = data.water_tank_level || [];
         }
 
         // Destroy previous chart if exists
@@ -505,7 +519,7 @@
             ctx,
             label,
             dataArr,
-            data.plan_id,
+            data.PLAN_ID,
             color,
             planColor,
             yLabel
@@ -517,11 +531,8 @@
         }
     }
 
-    async function fetchWaterLevel() {
-        return Math.floor(Math.random() * 101);
-    }
 
-    function updateWaterLevelCard(level) {
+    function updateWaterLevelCard(level, message) {
         const fill = document.getElementById('waterCardFill');
         const label = document.getElementById('waterCardLabel');
         const card = document.getElementById('waterLevelCard');
@@ -536,7 +547,7 @@
 
         // Remove previous color classes
         card.classList.remove('low', 'medium', 'high');
-
+        console.log(message)
         // Add color class based on level
         if (level >= 70) {
             card.classList.add('high');
@@ -550,16 +561,7 @@
         }
     }
 
-    // Poll and update water level every 10 seconds
-    async function pollWaterLevel() {
-        const level = await fetchWaterLevel();
-        updateWaterLevelCard(level);
-        updateWaterLevelProgress(level);
-    }
-    document.addEventListener('DOMContentLoaded', pollWaterLevel);
-    setInterval(pollWaterLevel, 10000);
-
-    function updateWaterLevelProgress(level) {
+    function updateWaterLevelProgress(level, message) {
         const bar = document.getElementById('waterLevelProgressBar');
         const msg = document.getElementById('waterLevelProgressMsg');
         let barClass = 'bg-primary';
@@ -572,6 +574,18 @@
             barClass = 'bg-warning text-dark';
             text = 'Caution: Water level low!';
         }
+        console.log(message)
+        if(message != null && message.length > 0) {
+            text = message[0].message;
+            if(message[0].type == 'warning')
+                barClass = 'bg-warning text-dark';
+            else if(message[0].type == 'danger')
+                barClass = 'bg-danger';
+            else if(message[0].type == 'success')
+                barClass = 'bg-success';
+            else
+                barClass = 'bg-info';
+        }
 
         bar.className = `progress-bar progress-bar-striped progress-bar-animated ${barClass}`;
         bar.style.width = `${level}%`;
@@ -583,21 +597,10 @@
     setInterval(fetchNotifications, 5000);
     document.addEventListener('DOMContentLoaded', renderCharts);
 
-    async function fetchHoursUntilRain() {
-        return Math.floor(Math.random() * 25); // 0-24 hours
-    }
-
     function updateRainCard(hours) {
         const label = document.getElementById('rainCardLabel');
         label.textContent = hours !== null && hours !== undefined ? hours : '--';
     }
-
-    async function pollRainCard() {
-        const hours = await fetchHoursUntilRain();
-        updateRainCard(hours);
-    }
-    document.addEventListener('DOMContentLoaded', pollRainCard);
-    setInterval(pollRainCard, 10000);
 
 
     async function fetchCurrentStates() {
@@ -638,7 +641,7 @@
 
             const parts = key.split(' ');
             const baseKey = parts[0];
-            const instance = parts[1]; // e.g., 's1', 's2'
+            const instance = parts[1];
 
             if (iconMap[baseKey]) {
                 const label = instance
@@ -681,13 +684,6 @@
             `;
         });
     }
-
-    // async function pollStateCard() {
-    //     const states = await fetchCurrentStates();
-    //     updateStateCard(states);
-    // }
-    // document.addEventListener('DOMContentLoaded', pollStateCard);
-    // setInterval(pollStateCard, 10000);
 
     function renderWeatherChart(weather) {
         if (!weather || !weather.hourly) return;

@@ -64,12 +64,24 @@ def get_latest_plan_id(client):
     result = client.query(query, database=database)
     
     df = result.to_pandas()
-    plan_id = df[states.PLAN_ID][0] if len(df[states.PLAN_ID]) > 0 else None
+    plan_id = df[states.PLAN_ID][0] if len(df[states.PLAN_ID]) > 0 else 0
     return plan_id
 
-def get_temperature_humidity_means(client, plan_id):
+def get_avg_tank_level_mean():
+    client = _InfluxSingleton.get_client()
+    query = f'''
+        SELECT AVG("{states.WATER_LEVEL}") FROM "greenhouse_sensors" WHERE time >= now() - interval '5 minute'
+    '''
+    result = client.query(query, database=database)
+    
+    df = result.to_pandas()
+    col_name = f'avg(greenhouse_sensors.{states.WATER_LEVEL})'
+    print(df[col_name].iloc[0])
+    return df[col_name].iloc[0]
+
+def get_sensor_means(client, plan_id):
     fluents = {}
-    for fluent in [states.TEMPERATURE, states.HUMIDITY]:
+    for fluent in [states.TEMPERATURE, states.HUMIDITY, states.WATER_LEVEL]:
         query = f'''
             SELECT AVG("{fluent}") FROM "greenhouse_sensors"
             WHERE "{states.PLAN_ID}" = '{plan_id}'
@@ -83,9 +95,10 @@ def get_temperature_humidity_means(client, plan_id):
                 fluents[fluent] = float(value)
     return fluents
 
-def get_latest_hours_until_rain(client):
+def get_latest_hours_until_rain():
+    client = _InfluxSingleton.get_client()
     query = '''
-        SELECT * FROM "hours_until_rain" ORDER BY time DESC LIMIT 1
+        SELECT * FROM "weather" ORDER BY time DESC LIMIT 1
     '''
     result = client.query(query, database=database)
     df = result.to_pandas()
@@ -105,8 +118,8 @@ def get_latest_hours_until_rain(client):
     return None
 
 def get_fluent_means(client, plan_id):
-    fluents = get_temperature_humidity_means(client, plan_id)
-    hours_until_rain = get_latest_hours_until_rain(client)
+    fluents = get_sensor_means(client, plan_id)
+    hours_until_rain = get_latest_hours_until_rain()
     if hours_until_rain is not None:
         fluents["hours_until_rain"] = hours_until_rain
     fluents = validate_fluents(fluents)
@@ -161,7 +174,7 @@ def insert_hours_until_rain(data):
             print(f"No rain expected in the forecast period (precipitation_probability > {required_prob}% not found). Setting it to default 100")
             hours_until_rain = 100
         point = (
-            Point("hours_until_rain")
+            Point("weather")
             .field("hours_until_rain", hours_until_rain)
         )
         client.write(database=database, record=point)
@@ -228,27 +241,27 @@ def get_sensor_timeseries_data(interval="1h"):
         df = df.reset_index()
 
     result_data = {
-        "temperature": [],
-        "humidity": [],
-        "soil_moisture": [],
-        "water_level": [],
-        "plan_id": []
+        states.TEMPERATURE: [],
+        states.HUMIDITY: [],
+        states.SOIL_MOISTURE: [],
+        states.WATER_LEVEL: [],
+        states.PLAN_ID: []
     }
 
     if not df.empty and "time" in df.columns:
         for _, row in df.iterrows():
             time_str = row["time"].strftime("%H:%M")
             if states.TEMPERATURE in df.columns and row[states.TEMPERATURE] is not None:
-                result_data["temperature"].append({"time": time_str, "value": float(row[states.TEMPERATURE])})
+                result_data[states.TEMPERATURE].append({"time": time_str, "value": float(row[states.TEMPERATURE])})
             if states.HUMIDITY in df.columns and row[states.HUMIDITY] is not None:
-                result_data["humidity"].append({"time": time_str, "value": float(row[states.HUMIDITY])})
+                result_data[states.HUMIDITY].append({"time": time_str, "value": float(row[states.HUMIDITY])})
             if states.SOIL_MOISTURE in df.columns and row[states.SOIL_MOISTURE] is not None:
-                result_data["soil_moisture"].append({"time": time_str, "value": float(row[states.SOIL_MOISTURE])})
+                result_data[states.SOIL_MOISTURE].append({"time": time_str, "value": float(row[states.SOIL_MOISTURE])})
             if states.WATER_LEVEL in df.columns and row[states.WATER_LEVEL] is not None:
-                result_data["water_level"].append({"time": time_str, "value": float(row[states.WATER_LEVEL])}) 
+                result_data[states.WATER_LEVEL].append({"time": time_str, "value": float(row[states.WATER_LEVEL])}) 
             # Get plan_id from column if present, else None
             plan_id_val = str(row[plan_id_col]) if plan_id_col in row and row[plan_id_col] is not None else None
-            result_data["plan_id"].append({"time": time_str, "value": plan_id_val})
+            result_data[states.PLAN_ID].append({"time": time_str, "value": plan_id_val})
 
     return result_data
 

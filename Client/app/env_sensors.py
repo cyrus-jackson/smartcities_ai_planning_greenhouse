@@ -22,7 +22,7 @@ class SoilMoistureSensor:
     
 class WaterTankLevelSensor:
     def get_reading(self):
-        return 85  # Depth Logic
+        return 10  # Depth Logic
 
 def sensor_loop(rabbitmq_client, interval=10):
     # Create a new connection and channel for this thread

@@ -17,7 +17,7 @@ if __name__ == '__main__':
     scheduler.add_job(long_running_task, 'interval', seconds=150, args=[5, 7])
 
     # Schedule weather fetch every hour
-    scheduler.add_job(fetch_weather_forecast, 'interval', hours=1)
+    scheduler.add_job(fetch_weather_forecast, 'interval', minutes=20)
     
     scheduler.start()
 
