@@ -1,6 +1,9 @@
 import json
 import os
 
+# A0
+TEMPERATURE_GPIO = 0
+
 DEFAULT_CONFIG = {
     "rabbitmq": {
         "host": os.environ.get("RABBITMQ_HOST", "localhost"),
