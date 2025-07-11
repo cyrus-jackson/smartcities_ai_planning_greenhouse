@@ -3,7 +3,7 @@ from datetime import datetime
 import json
 import os
 
-conn_str = os.environ.get("POSTGRESQL_CONNECTION_STRING")
+conn_str = os.environ.get("POSTGRESQL_CONNECTION_STRING").strip()
 
 
 def insert_pddl_problem(problem_name, content, solution, domain='greenhouse'):

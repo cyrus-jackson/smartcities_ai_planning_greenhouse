@@ -34,5 +34,5 @@ if __name__ == '__main__':
 
     # Reset all Notifications
     reset_notifications()
-    app.run()
+    app.run(port=5001)
 

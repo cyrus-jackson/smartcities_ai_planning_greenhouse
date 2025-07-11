@@ -6,10 +6,10 @@ import os
 import certifi
 from influxdb_client_3 import InfluxDBClient3, Point, flight_client_options
 
-token = os.environ.get("INFLUXDB_TOKEN")
-org = os.environ.get("INFLUXDB_ORG")
-host = os.environ.get("INFLUXDB_HOST")
-database = os.environ.get("INFLUXDB_DATABASE")
+token = os.environ.get("INFLUXDB_TOKEN").strip()
+org = os.environ.get("INFLUXDB_ORG").strip()
+host = os.environ.get("INFLUXDB_HOST").strip()
+database = os.environ.get("INFLUXDB_DATABASE").strip()
 
 fh = open(certifi.where(), "r")
 cert = fh.read()
