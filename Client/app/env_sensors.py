@@ -13,12 +13,6 @@ class HumiditySensor:
     def get_reading(self):
         return 55  # percent
     
-class SoilMoistureSensor:
-    def __init__(self, analog_port=0):
-        print("Ok")
-
-    def get_reading(self):
-        return 38  # Celsius
 
 def sensor_loop(rabbitmq_client, interval=10):
     """
