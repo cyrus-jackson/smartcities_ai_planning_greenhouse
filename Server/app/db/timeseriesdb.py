@@ -162,7 +162,7 @@ def get_data():
 
 def insert_hours_until_rain(data):
     try:
-        required_prob = 50
+        required_prob = 20
         client = _InfluxSingleton.get_client()
         probabilities = data["hourly"]["precipitation_probability"]
         hours_until_rain = None

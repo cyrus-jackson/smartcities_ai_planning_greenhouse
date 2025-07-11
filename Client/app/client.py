@@ -3,7 +3,7 @@ import json
 import threading
 import state_constants as states
 
-from config import load_config
+from config import load_config, FAN_GPIO
 from state_manager import StateManager
 
 from fan_module import FanModule
@@ -32,7 +32,7 @@ class RabbitMQClient:
         self.channel.queue_declare(queue=self.states_queue)
         self.state_manager = StateManager(self, self.states_queue)
         # Instantiate modules once and reuse
-        self.fan = FanModule(self.state_manager)
+        self.fan = FanModule(self.state_manager, relay_port=FAN_GPIO)
         self.roof = RoofModule(self.state_manager)
 
     def send_to_sensor_queue(self, message):

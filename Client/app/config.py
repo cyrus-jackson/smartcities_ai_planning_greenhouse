@@ -7,6 +7,9 @@ TEMPERATURE_GPIO = 0
 # A1
 SOIL_MOISTURE_GPIO = 1
 
+# D2
+FAN_GPIO = 2
+
 # D4
 WATER_TANK_GPIO = 4
 # In Centimeters
