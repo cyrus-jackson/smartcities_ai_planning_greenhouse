@@ -72,7 +72,7 @@ class WaterPumpModule:
             shutoff_time = duration if duration is not None else self.auto_shutoff_duration
             print(f"WaterPumpModule: Water pump will auto-shutoff in {shutoff_time} seconds")
             
-            self.shutoff_timer = threading.Timer(shut\hspace
+            self.shutoff_timer = threading.Timer(shutoff_timer)
             self.shutoff_timer.start()
             
             print("WaterPumpModule: Water pump is now ON - Relay activated")
