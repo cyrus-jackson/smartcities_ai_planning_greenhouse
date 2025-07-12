@@ -1,39 +1,41 @@
 #!/usr/bin/env python3
 
 import time
-import grovepi
 import threading
 import state_constants as states
+import RPi.GPIO as GPIO
 
 class WaterPumpModule:
-    def __init__(self, state_manager, relay_port=3, auto_shutoff_duration=6):
+    def __init__(self, state_manager, gpio_pin=18, auto_shutoff_duration=6):
         """
-        Initialize the WaterPumpModule with relay control and auto-shutoff
+        Initialize the WaterPumpModule with standard GPIO relay control and auto-shutoff
         
         Args:
             state_manager: State manager instance for tracking pump state
-            relay_port: Digital port number where the relay is connected (default: D3)
+            gpio_pin: GPIO pin number where the relay control is connected (default: 18)
             auto_shutoff_duration: Duration in seconds after which pump automatically turns off
         """
         self.state_manager = state_manager
-        self.relay_port = relay_port
+        self.gpio_pin = gpio_pin
         self.auto_shutoff_duration = auto_shutoff_duration
         self.is_initialized = False
         self.shutoff_timer = None
         
-        # Initialize the relay
-        self._init_relay()
+        # Initialize GPIO
+        self._init_gpio()
     
-    def _init_relay(self):
-        """Initialize the relay pin as output"""
+    def _init_gpio(self):
+        """Initialize the GPIO pin for relay control"""
         try:
-            grovepi.pinMode(self.relay_port, "OUTPUT")
-            # Start with pump OFF
-            grovepi.digitalWrite(self.relay_port, 0)
+            GPIO.setmode(GPIO.BCM)
+            GPIO.setup(self.gpio_pin, GPIO.OUT)
+            # Start with pump OFF (relay not activated)
+            GPIO.output(self.gpio_pin, GPIO.LOW)
+            
             self.is_initialized = True
-            print(f"WaterPumpModule: Relay initialized on port D{self.relay_port}")
+            print(f"WaterPumpModule: GPIO initialized on pin {self.gpio_pin}")
         except Exception as e:
-            print(f"WaterPumpModule: Error initializing relay: {e}")
+            print(f"WaterPumpModule: Error initializing GPIO: {e}")
             self.is_initialized = False
     
     def _auto_shutoff(self):
@@ -49,7 +51,7 @@ class WaterPumpModule:
             duration: Optional duration in seconds to override default auto-shutoff
         """
         if not self.is_initialized:
-            print("WaterPumpModule: ERROR - Relay not initialized!")
+            print("WaterPumpModule: ERROR - GPIO not initialized!")
             return False
         
         # Cancel any existing timer
@@ -58,7 +60,7 @@ class WaterPumpModule:
         
         try:
             print("WaterPumpModule: Turning water pump ON")
-            grovepi.digitalWrite(self.relay_port, 1)
+            GPIO.output(self.gpio_pin, GPIO.HIGH)
             self.state_manager.update_state(states.WATER_PUMP_ON)
             
             # Set auto-shutoff timer
@@ -68,7 +70,7 @@ class WaterPumpModule:
             self.shutoff_timer = threading.Timer(shutoff_time, self._auto_shutoff)
             self.shutoff_timer.start()
             
-            print("WaterPumpModule: Water pump is now ON - Device connected to relay is powered")
+            print("WaterPumpModule: Water pump is now ON - Relay activated")
             return True
         except Exception as e:
             print(f"WaterPumpModule: Error turning water pump on: {e}")
@@ -77,7 +79,7 @@ class WaterPumpModule:
     def turn_off(self):
         """Turn the water pump OFF by deactivating the relay"""
         if not self.is_initialized:
-            print("WaterPumpModule: ERROR - Relay not initialized!")
+            print("WaterPumpModule: ERROR - GPIO not initialized!")
             return False
         
         # Cancel any existing timer
@@ -87,9 +89,9 @@ class WaterPumpModule:
         
         try:
             print("WaterPumpModule: Turning water pump OFF")
-            grovepi.digitalWrite(self.relay_port, 0)
+            GPIO.output(self.gpio_pin, GPIO.LOW)
             self.state_manager.update_state(states.WATER_PUMP_OFF)
-            print("WaterPumpModule: Water pump is now OFF - Device connected to relay is unpowered")
+            print("WaterPumpModule: Water pump is now OFF - Relay deactivated")
             return True
         except Exception as e:
             print(f"WaterPumpModule: Error turning water pump off: {e}")
@@ -99,7 +101,7 @@ class WaterPumpModule:
         """Toggle the water pump state"""
         current_state = self.state_manager.get_current_state()
         
-        if current_state == states.WATER_PUMP_ON:
+        if current_state.get(states.WATER_PUMP_ON, 0) == 1:
             return self.turn_off()
         else:
             return self.turn_on(duration)
@@ -107,12 +109,11 @@ class WaterPumpModule:
     def get_status(self):
         """Get the current water pump status"""
         current_state = self.state_manager.get_current_state()
-        return current_state == states.WATER_PUMP_ON
+        return current_state.get(states.WATER_PUMP_ON, 0) == 1
     
     def get_remaining_time(self):
         """Get remaining time before auto-shutoff (if pump is running)"""
         if self.shutoff_timer and self.shutoff_timer.is_alive():
-            # This is an approximation since Timer doesn't expose remaining time
             return "Timer active"
         return "No timer active"
     
@@ -158,7 +159,7 @@ class WaterPumpModule:
             self.shutoff_timer = None
         
         try:
-            grovepi.digitalWrite(self.relay_port, 0)
+            GPIO.output(self.gpio_pin, GPIO.LOW)
             self.state_manager.update_state(states.WATER_PUMP_OFF)
             print("WaterPumpModule: Emergency shutdown completed")
         except Exception as e:
@@ -168,31 +169,35 @@ class WaterPumpModule:
         """Clean shutdown of the water pump module"""
         print("WaterPumpModule: Cleaning up...")
         self.turn_off()
+        GPIO.cleanup()
         print("WaterPumpModule: Cleanup completed")
 
-# testing
+# Example usage and testing
 if __name__ == '__main__':
     # Mock state manager for testing
     class MockStateManager:
         def __init__(self):
-            self.current_state = states.WATER_PUMP_OFF
+            self.current_state = {states.WATER_PUMP_OFF: 1, states.WATER_PUMP_ON: 0}
         
         def update_state(self, new_state):
-            self.current_state = new_state
+            if new_state == states.WATER_PUMP_ON:
+                self.current_state = {states.WATER_PUMP_OFF: 0, states.WATER_PUMP_ON: 1}
+            else:
+                self.current_state = {states.WATER_PUMP_OFF: 1, states.WATER_PUMP_ON: 0}
             print(f"StateManager: State updated to {new_state}")
         
         def get_current_state(self):
             return self.current_state
     
     print("WaterPumpModule Test Program")
-    print("Connect Grove Relay to digital port D3")
-    print("Connect your water pump to the relay output")
-    print("WARNING: Only connect appropriate power devices to the relay!")
+    print("Connect relay control to GPIO pin 18")
+    print("Connect your water pump to relay output")
+    print("WARNING: Ensure proper power supply and safety measures!")
     print("=" * 50)
     
     # Create state manager and water pump module
     state_manager = MockStateManager()
-    pump = WaterPumpModule(state_manager, relay_port=3, auto_shutoff_duration=10)
+    pump = WaterPumpModule(state_manager, gpio_pin=18, auto_shutoff_duration=10)
     
     try:
         # Interactive control
