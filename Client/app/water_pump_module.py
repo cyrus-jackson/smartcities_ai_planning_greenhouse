@@ -42,8 +42,11 @@ class WaterPumpModule:
     
     def _auto_shutoff(self):
         """Internal method to automatically turn off the pump after specified duration"""
-        print(f"WaterPumpModule: Auto-shutoff triggered after {self.auto_shutoff_duration} seconds")
-        self.turn_off()
+        try:
+            print(f"WaterPumpModule: Auto-shutoff triggered after {self.auto_shutoff_duration} seconds")
+            self.turn_off()
+        except Exception as e:
+            print(f"WaterPumpModule: Error in auto-shutoff: {e}")
     
     def turn_on(self, duration=None):
         """
@@ -140,11 +143,13 @@ class WaterPumpModule:
             
             # Turn pump ON with custom duration
             if self.turn_on(duration=on_duration):
-                time.sleep(on_duration + 1)  # Wait for auto-shutoff + 1 second
-            
-            # Manually turn off if still running
-            if self.get_status():
-                self.turn_off()
+                time.sleep(on_duration)  # Wait for the on duration
+                print(f"WaterPumpModule: Attempting to turn off after {on_duration} seconds")
+                self.turn_off()  # Explicitly turn off
+                if not self.get_status():
+                    print("WaterPumpModule: Confirmed pump is OFF")
+                else:
+                    print("WaterPumpModule: WARNING - Pump still ON after turn_off attempt")
             
             # Wait between cycles
             time.sleep(off_duration)
