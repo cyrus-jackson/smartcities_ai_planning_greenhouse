@@ -5,6 +5,7 @@ class StateManager:
     # Define mutually exclusive state groups
     _MUTUALLY_EXCLUSIVE = [
         {FAN_ON, FAN_OFF},
+        {WATER_PUMP_ON, WATER_PUMP_OFF},
         {RUN_ROOF_SERVO_S1, CLOSE_ROOF_SERVO_S1},
         {RUN_ROOF_SERVO_S2, CLOSE_ROOF_SERVO_S2},
     ]

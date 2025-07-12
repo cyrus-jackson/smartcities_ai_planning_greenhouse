@@ -16,7 +16,7 @@ redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_respo
 LOCK_EXPIRE = 60  # seconds
 
 BATCH_SIZE = 50
-BATCH_TIMEOUT = 5  # seconds
+BATCH_TIMEOUT = 20  # seconds
 
 NOTIFICATIONS_KEY = "latest_notifications"
 CURRENT_STATES = "current_states"

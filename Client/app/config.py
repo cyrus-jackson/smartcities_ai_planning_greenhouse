@@ -10,10 +10,14 @@ SOIL_MOISTURE_GPIO = 1
 # D2
 FAN_GPIO = 2
 
+# Water Pump Relay GPIO. This is not a Groove Relay. 
+WATER_PUMP_GPIO = 3
+
 # D4
 WATER_TANK_GPIO = 4
 # In Centimeters
 WATER_TANK_HEIGHT = 100
+
 
 
 DEFAULT_CONFIG = {

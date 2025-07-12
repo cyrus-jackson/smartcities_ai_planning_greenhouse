@@ -9,7 +9,8 @@ RUN_ROOF_SERVO_S2 = "run_servo s2"
 CLOSE_ROOF_SERVO_S1 = "close_servo s1"
 CLOSE_ROOF_SERVO_S2 = "close_servo s2"
 
-
+WATER_PUMP_ON = "water_pump_on"
+WATER_PUMP_OFF = "water_pump_off"
 
 HUMIDITY = "humidity"
 TEMPERATURE = "temperature"
@@ -29,6 +30,8 @@ DEFAULT_STATE = {
     RUN_ROOF_SERVO_S2: 0,
     FAN_OFF: 1,
     FAN_ON: 0,
+    WATER_PUMP_OFF: 1,
+    WATER_PUMP_ON: 0,
     PLAN_ID: 0
 }
 

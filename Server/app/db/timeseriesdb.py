@@ -18,10 +18,10 @@ fh.close()
 sample_data = {
     "name": "all_checks_case",
     "fluents": {
-        "hours_until_rain": 40,
-        "water_tank_level": 70,
-        "temperature": 50,
-        "humidity": 5
+        "hours_until_rain": 40.0,
+        "water_tank_level": 70.0,
+        "temperature": 50.0,
+        "humidity": 50.1
     },
     "init": [
         "outside_environment_safe",

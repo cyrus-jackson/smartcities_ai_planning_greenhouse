@@ -3,10 +3,11 @@ import json
 import threading
 import state_constants as states
 
-from config import load_config, FAN_GPIO
+from config import load_config, FAN_GPIO, WATER_PUMP_GPIO
 from state_manager import StateManager
 
 from fan_module import FanModule
+from water_pump_module import WaterPumpModule
 from env_sensors import sensor_loop
 from roof_module import RoofModule
 
@@ -33,6 +34,7 @@ class RabbitMQClient:
         self.state_manager = StateManager(self, self.states_queue)
         # Instantiate modules once and reuse
         self.fan = FanModule(self.state_manager, relay_port=FAN_GPIO)
+        self.water_pump = WaterPumpModule(self.state_manager, relay_port=WATER_PUMP_GPIO, auto_shutoff_duration=6)
         self.roof = RoofModule(self.state_manager)
 
     def send_to_sensor_queue(self, message):
@@ -68,6 +70,9 @@ class RabbitMQClient:
             self.close()
 
     def close(self):
+        # Clean shutdown of modules
+        self.fan.cleanup()
+        self.water_pump.cleanup()
         self.connection.close()
 
 def invoke_action(action, client):
@@ -77,6 +82,10 @@ def invoke_action(action, client):
         client.fan.turn_on()
     elif action == states.FAN_OFF:
         client.fan.turn_off()
+    elif action == states.WATER_PUMP_ON:
+        client.water_pump.turn_on()
+    elif action == states.WATER_PUMP_OFF:
+        client.water_pump.turn_off()
     elif action.startswith("run_servo"):
         servo = action.split()[-1]
         if servo == "s1":
