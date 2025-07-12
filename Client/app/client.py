@@ -11,7 +11,6 @@ from water_pump_module import WaterPumpModule
 from env_sensors import sensor_loop
 from roof_module import RoofModule
 
-
 class RabbitMQClient:
     def __init__(self, config=None):
         if config is None:
@@ -34,7 +33,7 @@ class RabbitMQClient:
         self.state_manager = StateManager(self, self.states_queue)
         # Instantiate modules once and reuse
         self.fan = FanModule(self.state_manager, relay_port=FAN_GPIO)
-        self.water_pump = WaterPumpModule(self.state_manager, relay_port=WATER_PUMP_GPIO, auto_shutoff_duration=6)
+        self.water_pump = WaterPumpModule(self.state_manager, gpio_pin=WATER_PUMP_GPIO, auto_shutoff_duration=6)
         self.roof = RoofModule(self.state_manager)
 
     def send_to_sensor_queue(self, message):

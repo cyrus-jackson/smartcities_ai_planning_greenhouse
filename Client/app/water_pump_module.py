@@ -5,8 +5,10 @@ import threading
 import state_constants as states
 import RPi.GPIO as GPIO
 
+DEFAULT_GPIO_PIN = 0
+
 class WaterPumpModule:
-    def __init__(self, state_manager, gpio_pin=18, auto_shutoff_duration=6):
+    def __init__(self, state_manager, gpio_pin=DEFAULT_GPIO_PIN, auto_shutoff_duration=6):
         """
         Initialize the WaterPumpModule with standard GPIO relay control and auto-shutoff
         
@@ -190,14 +192,14 @@ if __name__ == '__main__':
             return self.current_state
     
     print("WaterPumpModule Test Program")
-    print("Connect relay control to GPIO pin 18")
+    print(f"Connect relay control to GPIO pin {DEFAULT_GPIO_PIN}")
     print("Connect your water pump to relay output")
     print("WARNING: Ensure proper power supply and safety measures!")
     print("=" * 50)
     
     # Create state manager and water pump module
     state_manager = MockStateManager()
-    pump = WaterPumpModule(state_manager, gpio_pin=18, auto_shutoff_duration=10)
+    pump = WaterPumpModule(state_manager, gpio_pin=DEFAULT_GPIO_PIN, auto_shutoff_duration=10)
     
     try:
         # Interactive control
