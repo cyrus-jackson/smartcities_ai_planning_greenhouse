@@ -72,7 +72,7 @@ class WaterPumpModule:
             shutoff_time = duration if duration is not None else self.auto_shutoff_duration
             print(f"WaterPumpModule: Water pump will auto-shutoff in {shutoff_time} seconds")
             
-            self.shutoff_timer = threading.Timer(shutoff_timer)
+            self.shutoff_timer = threading.Timer(shutoff_time, self._auto_shutoff)
             self.shutoff_timer.start()
             
             print("WaterPumpModule: Water pump is now ON - Relay activated")
@@ -96,13 +96,6 @@ class WaterPumpModule:
             print("WaterPumpModule: Turning water pump OFF")
             GPIO.output(self.gpio_pin, GPIO.LOW)
             self.state_manager.update_state(states.WATER_PUMP_OFF)
-            # Verify GPIO state
-            current_state = GPIO.input(self.gpio_pin)
-            print(f"WaterPumpModule: GPIO pin {self.gpio_pin} state: {'HIGH' if current_state else 'LOW'}")
-            if current_state != GPIO.LOW:
-                print("WaterPumpModule: WARNING - GPIO state did not change to LOW")
-                # Retry setting GPIO
-                GPIO.output(self.gpio_pin, GPIO.LOW)
             print("WaterPumpModule: Water pump is now OFF - Relay deactivated")
             return True
         except Exception as e:
@@ -148,34 +141,18 @@ class WaterPumpModule:
         for i in range(cycles):
             print(f"WaterPumpModule: Test cycle {i+1}/{cycles}:")
             
-            # Turn pump ON
+            # Turn pump ON with custom duration
             if self.turn_on(duration=on_duration):
-                try:
-                    print(f"WaterPumpModule: Waiting {on_duration} seconds with pump ON")
-                    time.sleep(on_duration)
-                except Exception as e:
-                    print(f"WaterPumpModule: Error during ON wait: {e}")
-            
-            # Explicitly turn off and cancel timer
-            print("WaterPumpModule: Attempting to turn off pump")
-            if self.shutoff_timer:
-                self.shutoff_timer.cancel()
-                self.shutoff_timer = None
-            if self.turn_off():
-                print("WaterPumpModule: Confirmed pump turn off attempt")
+                time.sleep(on_duration)  # Wait for the on duration
+                print(f"WaterPumpModule: Attempting to turn off after {on_duration} seconds")
+                self.turn_off()  # Explicitly turn off
                 if not self.get_status():
-                    print("WaterPumpModule: Confirmed pump is OFF via state manager")
+                    print("WaterPumpModule: Confirmed pump is OFF")
                 else:
-                    print("WaterPumpModule: WARNING - State manager indicates pump is still ON")
-            else:
-                print("WaterPumpModule: ERROR - Failed to turn off pump")
+                    print("WaterPumpModule: WARNING - Pump still ON after turn_off attempt")
             
             # Wait between cycles
-            try:
-                print(f"WaterPumpModule: Waiting {off_duration} seconds before next cycle")
-                time.sleep(off_duration)
-            except Exception as e:
-                print(f"WaterPumpModule: Error during OFF wait: {e}")
+            time.sleep(off_duration)
         
         print("WaterPumpModule: Water pump test completed")
     
