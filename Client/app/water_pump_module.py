@@ -5,7 +5,7 @@ import threading
 import state_constants as states
 import RPi.GPIO as GPIO
 
-DEFAULT_GPIO_PIN = 0
+DEFAULT_GPIO_PIN = 27
 
 class WaterPumpModule:
     def __init__(self, state_manager, gpio_pin=DEFAULT_GPIO_PIN, auto_shutoff_duration=6):
