@@ -2,7 +2,9 @@
     "name": "fan_check",
     "fluents": {
         "temperature": 40,
-        "humidity": 50
+        "humidity": 50,
+        "hours_until_rain": 90,
+        "water_tank_level": 11
     },
     "init": [],
     "goals": [{

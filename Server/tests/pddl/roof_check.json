@@ -1,8 +1,11 @@
 {
     "name": "roof_check",
     "fluents": {
-        "temperature": 40,
-        "humidity": 50
+
+        "hours_until_rain": 90,
+        "water_tank_level": 11,
+        "temperature": 50,
+        "humidity": 5
     },
     "init": ["outside_environment_safe"],
     "goals": [{

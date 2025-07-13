@@ -1,6 +1,8 @@
 {
     "name": "static1",
     "fluents": {
+        "temperature": 50,
+        "humidity": 5,
         "hours_until_rain": 40,
         "water_tank_level": 56
     },

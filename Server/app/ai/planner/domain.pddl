@@ -3,23 +3,23 @@
   (:requirements :strips :typing :negative-preconditions :numeric-fluents)
 
   (:types
-    measurement
-    time
-    temperature
     servo
   )
 
   (:predicates
-    (alert-warning)
-    (alert-high)
-    (no_alert)
+    ;; Equipment states
     (fan_on)
-    (fan_off)
+    (roof_open ?s - servo)
+    
+    ;; Environment conditions
     (outside_environment_safe)
-    (run_servo ?x - servo)
-    (close_servo ?x - servo)
+    (climate_controlled)
+    
+    ;; Alert states
+    (water_alert_handled)
+    
+    ;; Main goal
     (keep_greenhouse_comfortable)
-    (expecting_rain)
   )
 
   (:functions 
@@ -29,53 +29,84 @@
     (humidity)
   )
 
-;-------------------------------
-; Meta Goal Action
-;-------------------------------
-
-  (:action keep_greenhouse_comfortable
+  ;; ====================
+  ;; CLIMATE CONTROL ACTIONS
+  ;; ====================
+  
+  (:action turn_on_fan
     :parameters ()
     :precondition (and
-      ;; Alert precondition based on fluent value ranges
-      (or
-        (and (> (hours_until_rain) 30) (<= (water_tank_level) 10) (alert-high))
-        (and (> (hours_until_rain) 30) (> (water_tank_level) 10) (<= (water_tank_level) 50) (alert-warning))
-        (and (> (water_tank_level) 50) (no_alert))
-        (expecting_rain) 
-      )
-
-      ;; Fan preconditions
-      (or
-        (and (fan_on) (or (> (temperature) 24) (> (humidity) 10)))
-        (and (fan_off) (<= (temperature) 24) (<= (humidity) 10))
-      )
-
-      ;; Servo preconditions
-      (forall (?s - servo)
-        (or
-          (and (outside_environment_safe) (fan_on) (run_servo ?s))
-          (and (not (outside_environment_safe)) (close_servo ?s))
-          (and (outside_environment_safe) (fan_off) (close_servo ?s))
-        )
+      (not (fan_on))
+      (or 
+        (> (temperature) 24)
+        (> (humidity) 10)
       )
     )
-    :effect (keep_greenhouse_comfortable)
+    :effect (fan_on)
   )
-;-------------------------------
-; Notifications
-;-------------------------------
+
+  (:action turn_off_fan
+    :parameters ()
+    :precondition (and
+      (fan_on)
+      (<= (temperature) 24)
+      (<= (humidity) 10)
+    )
+    :effect (not (fan_on))
+  )
+
+  (:action establish_climate_control
+    :parameters ()
+    :precondition (and
+      (not (climate_controlled))
+      (or
+        ;; Fan should be on if temp/humidity high
+        (and (fan_on) (or (> (temperature) 24) (> (humidity) 10)))
+        ;; Fan should be off if temp/humidity low
+        (and (not (fan_on)) (<= (temperature) 24) (<= (humidity) 10))
+      )
+    )
+    :effect (climate_controlled)
+  )
+
+  ;; ====================
+  ;; ROOF CONTROL ACTIONS
+  ;; ====================
+
+  (:action open_roof
+    :parameters (?s - servo)
+    :precondition (and
+      (not (roof_open ?s))
+      (outside_environment_safe)
+      (fan_on)
+    )
+    :effect (roof_open ?s)
+  )
+
+  (:action close_roof
+    :parameters (?s - servo)
+    :precondition (and
+      (roof_open ?s)
+      (or
+        (not (outside_environment_safe))
+        (not (fan_on))
+      )
+    )
+    :effect (not (roof_open ?s))
+  )
+
+  ;; ====================
+  ;; NOTIFICATION ACTIONS
+  ;; ====================
 
   (:action issue_high_alert
     :parameters ()
     :precondition (and
       (> (hours_until_rain) 30)
       (<= (water_tank_level) 10)
+      (not (water_alert_handled))
     )
-    :effect (and
-      (alert-high)
-      (not (alert-warning))
-      (not (no_alert))
-    )
+    :effect (water_alert_handled)
   )
 
   (:action issue_warning
@@ -84,104 +115,54 @@
       (> (hours_until_rain) 30)
       (> (water_tank_level) 10)
       (<= (water_tank_level) 50)
+      (not (water_alert_handled))
     )
-    :effect (and
-      (alert-warning)
-      (not (alert-high))
-      (not (no_alert))
-    )
+    :effect (water_alert_handled)
   )
 
   (:action issue_no_alert
     :parameters ()
     :precondition (and
       (> (water_tank_level) 50)
+      (not (water_alert_handled))
     )
-    :effect (and
-      (no_alert)
-      (not (alert-warning))
-      (not (alert-high))
-    )
+    :effect (water_alert_handled)
   )
 
   (:action expecting_rain_alert
     :parameters ()
     :precondition (and
       (<= (hours_until_rain) 30)
-      (<= (water_tank_level) 10)
+      (not (water_alert_handled))
     )
-    :effect (expecting_rain)
+    :effect (water_alert_handled)
   )
 
-  (:action expecting_rain_warning
+  ;; ====================
+  ;; MAIN GOAL ACTION
+  ;; ====================
+  
+  (:action achieve_greenhouse_comfort
     :parameters ()
     :precondition (and
-      (<= (hours_until_rain) 30)
-      (> (water_tank_level) 10)
-      (<= (water_tank_level) 50)
-    )
-    :effect (expecting_rain)
-  )
-
-;---------------------------------
-; Fan Module
-;---------------------------------
-
-  (:action turn_on_fan
-    :parameters ()
-    :precondition (and
-      (or 
-        (> (temperature) 24)
-        (> (humidity) 10)
+      ;; Climate must be controlled
+      (climate_controlled)
+      
+      ;; Water alerts must be handled
+      (water_alert_handled)
+      
+      ;; Roof servos must be in correct state
+      (forall (?s - servo)
+        (or
+          ;; Case 1: Safe environment + fan on and roof open
+          (and (outside_environment_safe) (fan_on) (roof_open ?s))
+          ;; Case 2: Unsafe environment and roof closed
+          (and (not (outside_environment_safe)) (not (roof_open ?s)))
+          ;; Case 3: Fan off and roof closed
+          (and (not (fan_on)) (not (roof_open ?s)))
+        )
       )
     )
-    :effect (and 
-      (fan_on)
-      (not (fan_off))
-    )
+    :effect (keep_greenhouse_comfortable)
   )
-
-  (:action turn_off_fan
-    :parameters ()
-    :precondition (and
-      (<= (temperature) 24)
-      (<= (humidity) 10)
-    )
-    :effect (and 
-      (fan_off)
-      (not (fan_on))
-    )
-  )
-
-;--------------------------------
-; Roof Servo
-;--------------------------------
-
-  (:action open_roof
-    :parameters (?x - servo)
-    :precondition (and
-      (outside_environment_safe)
-      (fan_on)
-    )
-    :effect (and 
-      (run_servo ?x)
-      (not (close_servo ?x))
-    )
-  )
-
-  (:action close_roof
-    :parameters (?x - servo)
-    :precondition (or
-      (not (outside_environment_safe))
-      (or
-        (run_servo ?x)
-        (fan_off)
-      )
-    )
-    :effect (and 
-      (close_servo ?x)
-      (not (run_servo ?x))
-    )
-  )
-
 )
