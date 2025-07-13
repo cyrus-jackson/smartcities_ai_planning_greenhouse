@@ -1,13 +1,18 @@
 {
   "name": "improved_greenhouse_case",
   "fluents": {
-    "hours_until_rain": 20,
-    "water_tank_level": 80,
-    "temperature": 40,
+    "hours_until_rain": 90,
+    "water_tank_level": 11,
+    "temperature": 4,
     "humidity": 5,
-    "soil_moisture": 90
+    "soil_moisture": 15
   },
   "init": [
+    "fan_off",
+    "water_pump_off",
+    "roof_open s1",
+    "roof_closed s2",
+    "outside_environment_safe"
   ],
   "goals": [
     {
@@ -15,7 +20,8 @@
       "states": [
         "climate_optimal",
         "water_managed", 
-        "roof_properly_configured"
+        "roof_properly_configured",
+        "irrigation_managed"
       ]
     }
   ],

@@ -28,6 +28,14 @@
             "description": "Test Case"
         },
         {
+            "label": "Water Pump and Irrigation",
+            "preProcess": {
+                "kind": "jinja2",
+                "data": "water.json"
+            },
+            "description": "Test Case"
+        },
+        {
             "label": "Test Complete Problem",
             "preProcess": {
                 "kind": "jinja2",

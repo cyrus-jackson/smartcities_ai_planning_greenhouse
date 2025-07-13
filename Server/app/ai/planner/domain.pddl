@@ -11,12 +11,14 @@
     ;; Equipment states
     (fan_on)
     (roof_open ?s - servo)
+    (water_pump_on)
     
     ;; Environment conditions
     (outside_environment_safe)
     (temperature_comfortable)
     (humidity_comfortable)
     (water_level_adequate)
+    (soil_moisture_adequate)
     
     ;; Alert states
     (alert_issued ?level - alert-level)
@@ -25,6 +27,7 @@
     (climate_optimal)
     (water_managed)
     (roof_properly_configured)
+    (irrigation_managed)
   )
 
   (:functions 
@@ -32,6 +35,7 @@
     (hours_until_rain)
     (temperature)
     (humidity)
+    (soil_moisture)
   )
 
   ;; ====================
@@ -48,6 +52,21 @@
     :parameters ()
     :precondition (fan_on)
     :effect (not (fan_on))
+  )
+
+  (:action turn_on_water_pump
+    :parameters ()
+    :precondition (and
+      (not (water_pump_on))
+      (> (water_tank_level) 0)
+    )
+    :effect (water_pump_on)
+  )
+
+  (:action turn_off_water_pump
+    :parameters ()
+    :precondition (water_pump_on)
+    :effect (not (water_pump_on))
   )
 
   (:action open_roof
@@ -97,6 +116,20 @@
     :effect (humidity_comfortable)
   )
 
+  (:action assess_soil_moisture_adequacy
+    :parameters ()
+    :precondition (and
+      (not (soil_moisture_adequate))
+      (or
+        ;; Soil moisture is naturally adequate
+        (and (>= (soil_moisture) 30) (not (water_pump_on)))
+        ;; Soil moisture being improved by irrigation
+        (and (< (soil_moisture) 30) (water_pump_on))
+      )
+    )
+    :effect (soil_moisture_adequate)
+  )
+
   (:action establish_climate_optimality
     :parameters ()
     :precondition (and
@@ -105,6 +138,15 @@
       (humidity_comfortable)
     )
     :effect (climate_optimal)
+  )
+
+  (:action establish_irrigation_optimality
+    :parameters ()
+    :precondition (and
+      (not (irrigation_managed))
+      (soil_moisture_adequate)
+    )
+    :effect (irrigation_managed)
   )
 
   ;; ====================

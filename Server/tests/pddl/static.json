@@ -4,11 +4,23 @@
         "temperature": 50,
         "humidity": 5,
         "hours_until_rain": 40,
-        "water_tank_level": 56
+        "water_tank_level": 56,
+        "soil_moisture": 50
     },
     "init": ["outside_environment_safe"],
-    "goals": [{
-        "type": "or",
-        "states": ["alert-high", "alert-warning", "no_alert"]
-    }]
+    "goals": [
+        {
+        "type": "and",
+        "states": [
+            "climate_optimal",
+            "water_managed", 
+            "roof_properly_configured",
+            "irrigation_managed"
+        ]
+        }
+    ],
+    "objects": {
+        "servo": ["s1", "s2"],
+        "alert-level": ["high", "warning", "none", "rain-expected"]
+    }
 }

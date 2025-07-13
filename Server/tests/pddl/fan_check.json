@@ -3,12 +3,24 @@
     "fluents": {
         "temperature": 40,
         "humidity": 50,
-        "hours_until_rain": 90,
-        "water_tank_level": 11
+        "hours_until_rain": 10,
+        "water_tank_level": 80,
+        "soil_moisture": 67
     },
     "init": [],
-    "goals": [{
-        "type": "or",
-        "states": ["fan_on"]
-    }]
-}
+    "goals": [
+        {
+        "type": "and",
+        "states": [
+            "climate_optimal",
+            "water_managed", 
+            "roof_properly_configured",
+            "irrigation_managed"
+        ]
+        }
+    ],
+    "objects": {
+        "servo": ["s1", "s2"],
+        "alert-level": ["high", "warning", "none", "rain-expected"]
+    }
+    }
