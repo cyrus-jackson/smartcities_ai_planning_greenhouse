@@ -1,9 +1,10 @@
 (define (domain greenhouse)
 
-  (:requirements :strips :typing :negative-preconditions :numeric-fluents)
+  (:requirements :strips :typing :negative-preconditions :numeric-fluents :existential-preconditions :universal-preconditions)
 
   (:types
     servo
+    alert-level
   )
 
   (:predicates
@@ -13,13 +14,17 @@
     
     ;; Environment conditions
     (outside_environment_safe)
-    (climate_controlled)
+    (temperature_comfortable)
+    (humidity_comfortable)
+    (water_level_adequate)
     
     ;; Alert states
-    (water_alert_handled)
+    (alert_issued ?level - alert-level)
     
-    ;; Main goal
-    (keep_greenhouse_comfortable)
+    ;; Composite goals
+    (climate_optimal)
+    (water_managed)
+    (roof_properly_configured)
   )
 
   (:functions 
@@ -30,73 +35,80 @@
   )
 
   ;; ====================
-  ;; CLIMATE CONTROL ACTIONS
+  ;; BASIC EQUIPMENT ACTIONS
   ;; ====================
   
   (:action turn_on_fan
     :parameters ()
-    :precondition (and
-      (not (fan_on))
-      (or 
-        (> (temperature) 24)
-        (> (humidity) 10)
-      )
-    )
+    :precondition (not (fan_on))
     :effect (fan_on)
   )
 
   (:action turn_off_fan
     :parameters ()
-    :precondition (and
-      (fan_on)
-      (<= (temperature) 24)
-      (<= (humidity) 10)
-    )
+    :precondition (fan_on)
     :effect (not (fan_on))
   )
-
-  (:action establish_climate_control
-    :parameters ()
-    :precondition (and
-      (not (climate_controlled))
-      (or
-        ;; Fan should be on if temp/humidity high
-        (and (fan_on) (or (> (temperature) 24) (> (humidity) 10)))
-        ;; Fan should be off if temp/humidity low
-        (and (not (fan_on)) (<= (temperature) 24) (<= (humidity) 10))
-      )
-    )
-    :effect (climate_controlled)
-  )
-
-  ;; ====================
-  ;; ROOF CONTROL ACTIONS
-  ;; ====================
 
   (:action open_roof
     :parameters (?s - servo)
     :precondition (and
       (not (roof_open ?s))
       (outside_environment_safe)
-      (fan_on)
     )
     :effect (roof_open ?s)
   )
 
   (:action close_roof
     :parameters (?s - servo)
-    :precondition (and
-      (roof_open ?s)
-      (or
-        (not (outside_environment_safe))
-        (not (fan_on))
-      )
-    )
+    :precondition (roof_open ?s)
     :effect (not (roof_open ?s))
   )
 
   ;; ====================
-  ;; NOTIFICATION ACTIONS
+  ;; COMFORT ASSESSMENT ACTIONS
+  ;; ====================
+
+  (:action assess_temperature_comfort
+    :parameters ()
+    :precondition (and
+      (not (temperature_comfortable))
+      (or
+        ;; Temperature is good naturally
+        (and (<= (temperature) 24) (not (fan_on)))
+        ;; Temperature controlled by fan
+        (and (> (temperature) 24) (fan_on))
+      )
+    )
+    :effect (temperature_comfortable)
+  )
+
+  (:action assess_humidity_comfort
+    :parameters ()
+    :precondition (and
+      (not (humidity_comfortable))
+      (or
+        ;; Humidity is good naturally
+        (and (<= (humidity) 10) (not (fan_on)))
+        ;; Humidity controlled by fan
+        (and (> (humidity) 10) (fan_on))
+      )
+    )
+    :effect (humidity_comfortable)
+  )
+
+  (:action establish_climate_optimality
+    :parameters ()
+    :precondition (and
+      (not (climate_optimal))
+      (temperature_comfortable)
+      (humidity_comfortable)
+    )
+    :effect (climate_optimal)
+  )
+
+  ;; ====================
+  ;; WATER MANAGEMENT ACTIONS
   ;; ====================
 
   (:action issue_high_alert
@@ -104,9 +116,8 @@
     :precondition (and
       (> (hours_until_rain) 30)
       (<= (water_tank_level) 10)
-      (not (water_alert_handled))
     )
-    :effect (water_alert_handled)
+    :effect (alert_issued high)
   )
 
   (:action issue_warning
@@ -115,54 +126,57 @@
       (> (hours_until_rain) 30)
       (> (water_tank_level) 10)
       (<= (water_tank_level) 50)
-      (not (water_alert_handled))
     )
-    :effect (water_alert_handled)
+    :effect (alert_issued warning)
   )
 
   (:action issue_no_alert
     :parameters ()
-    :precondition (and
-      (> (water_tank_level) 50)
-      (not (water_alert_handled))
-    )
-    :effect (water_alert_handled)
+    :precondition (> (water_tank_level) 50)
+    :effect (alert_issued none)
   )
 
   (:action expecting_rain_alert
     :parameters ()
+    :precondition (<= (hours_until_rain) 30)
+    :effect (alert_issued rain-expected)
+  )
+
+  (:action confirm_water_managed
+    :parameters ()
     :precondition (and
-      (<= (hours_until_rain) 30)
-      (not (water_alert_handled))
+      (not (water_managed))
+      (exists (?level - alert-level) (alert_issued ?level))
     )
-    :effect (water_alert_handled)
+    :effect (water_managed)
   )
 
   ;; ====================
-  ;; MAIN GOAL ACTION
+  ;; ROOF CONFIGURATION ACTIONS
   ;; ====================
-  
-  (:action achieve_greenhouse_comfort
+
+  (:action configure_roof_for_ventilation
     :parameters ()
     :precondition (and
-      ;; Climate must be controlled
-      (climate_controlled)
-      
-      ;; Water alerts must be handled
-      (water_alert_handled)
-      
-      ;; Roof servos must be in correct state
-      (forall (?s - servo)
-        (or
-          ;; Case 1: Safe environment + fan on and roof open
-          (and (outside_environment_safe) (fan_on) (roof_open ?s))
-          ;; Case 2: Unsafe environment and roof closed
-          (and (not (outside_environment_safe)) (not (roof_open ?s)))
-          ;; Case 3: Fan off and roof closed
-          (and (not (fan_on)) (not (roof_open ?s)))
-        )
-      )
+      (not (roof_properly_configured))
+      (fan_on)
+      (outside_environment_safe)
+      (forall (?s - servo) (roof_open ?s))
     )
-    :effect (keep_greenhouse_comfortable)
+    :effect (roof_properly_configured)
   )
+
+  (:action configure_roof_for_protection
+    :parameters ()
+    :precondition (and
+      (not (roof_properly_configured))
+      (or
+        (not (outside_environment_safe))
+        (not (fan_on))
+      )
+      (forall (?s - servo) (not (roof_open ?s)))
+    )
+    :effect (roof_properly_configured)
+  )
+
 )

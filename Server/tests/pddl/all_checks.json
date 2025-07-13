@@ -1,5 +1,5 @@
 {
-  "name": "all_checks_case",
+  "name": "improved_greenhouse_case",
   "fluents": {
     "hours_until_rain": 90,
     "water_tank_level": 11,
@@ -7,12 +7,19 @@
     "humidity": 5
   },
   "init": [
-    "fan_off",
-    "roof_open s1",
-    "roof_closed s2",
-    "outside_environment_safe"
-  ]
+  ],
+  "goals": [
+    {
+      "type": "and",
+      "states": [
+        "climate_optimal",
+        "water_managed", 
+        "roof_properly_configured"
+      ]
+    }
+  ],
+  "objects": {
+    "servo": ["s1", "s2"],
+    "alert-level": ["high", "warning", "none", "rain-expected"]
+  }
 }
-
-
-

@@ -97,6 +97,8 @@ def invoke_action(action, client):
             client.roof.close_roof(states.CLOSE_ROOF_SERVO_S1)
         elif servo == "s2":
             client.roof.close_roof(states.CLOSE_ROOF_SERVO_S2)
+    else:
+        print(action)
 
 def main():
     client = RabbitMQClient()
