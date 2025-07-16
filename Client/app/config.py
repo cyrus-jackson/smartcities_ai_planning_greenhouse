@@ -19,6 +19,11 @@ WATER_TANK_GPIO = 4
 WATER_TANK_HEIGHT = 100
 
 
+# D3
+SERVO_1_GPIO = 3
+# D8
+SERVO_2_GPIO = 8
+
 
 DEFAULT_CONFIG = {
     "rabbitmq": {

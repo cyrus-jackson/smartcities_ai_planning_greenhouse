@@ -82,47 +82,40 @@ def invoke_action(action, client):
     if action in states.INFO_MESSAGES:
         print(f"Info: {states.INFO_MESSAGES[action]}")
         return
-        
-    # Handle actual control actions
-    if isinstance(action, str) and action.startswith("Humidity"):
-        try:
-            humidity_value = int(action.split()[-1])
-            client.humidity_sensor.set_target_humidity(humidity_value)
-            print(f"Setting target humidity to {humidity_value}%")
-            return
-        except (ValueError, IndexError) as e:
-            print(f"Error parsing humidity value: {e}")
-            return
-    elif action == states.FAN_ON:
-        client.fan.turn_on()
-        print("Action: Turning fan on")
-    elif action == states.FAN_OFF:
-        client.fan.turn_off()
-        print("Action: Turning fan off")
-    elif action == states.WATER_PUMP_ON:
-        client.water_pump.turn_on()
-        print("Action: Starting water pump")
-    elif action == states.WATER_PUMP_OFF:
-        client.water_pump.turn_off()
-        print("Action: Stopping water pump")
-    elif action.startswith("run_servo"):
-        servo = action.split()[-1]
-        if servo == "s1":
-            client.roof.open_roof(states.RUN_ROOF_SERVO_S1)
-            print("Action: Opening roof servo 1")
-        elif servo == "s2":
-            client.roof.open_roof(states.RUN_ROOF_SERVO_S2)
-            print("Action: Opening roof servo 2")
-    elif action.startswith("close_servo"):
-        servo = action.split()[-1]
-        if servo == "s1":
-            client.roof.close_roof(states.CLOSE_ROOF_SERVO_S1)
-            print("Action: Closing roof servo 1")
-        elif servo == "s2":
-            client.roof.close_roof(states.CLOSE_ROOF_SERVO_S2)
-            print("Action: Closing roof servo 2")
-    else:
-        print(f"Unknown action: {action}")
+    
+    try:
+        # Handle actual control actions
+        if isinstance(action, str):
+            if action.startswith("Humidity"):
+                humidity_value = int(action.split()[-1])
+                client.humidity_sensor.set_target_humidity(humidity_value)
+                print(f"Setting target humidity to {humidity_value}%")
+            
+            elif action == states.FAN_ON:
+                client.fan.turn_on()
+                print("Action: Turning fan on")
+            
+            elif action == states.FAN_OFF:
+                client.fan.turn_off()
+                print("Action: Turning fan off")
+            
+            elif action.startswith("run_servo"):
+                servo = action.split()[-1]
+                if servo in ["s1", "s2"]:
+                    client.roof.open_roof(action)
+                    print(f"Action: Opening roof servo {servo}")
+            
+            elif action.startswith("close_servo"):
+                servo = action.split()[-1]
+                if servo in ["s1", "s2"]:
+                    client.roof.close_roof(action)
+                    print(f"Action: Closing roof servo {servo}")
+            
+            else:
+                print(f"Unknown action: {action}")
+                
+    except Exception as e:
+        print(f"Error executing action: {str(e)}")
 
 def main():
     client = RabbitMQClient()

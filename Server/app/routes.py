@@ -63,18 +63,32 @@ def control_panel():
         
         try:
             if check_control_panel_password(password):
-                # Handle the action
                 config = load_config()
                 planner_queue = config["rabbitmq"].get("planner_queue", "planner_queue")
+                
+                # Map UI actions to state constants
+                action_mapping = {
+                    'Fan On': states.FAN_ON,
+                    'Fan Off': states.FAN_OFF,
+                }
+                
+                action = action_mapping.get(action, action)  # Use mapped action or original if not in mapping
                 
                 action_data = {
                     "action": action
                 }
-                print(action_data)
-                # If it's a humidity action, parse the value
-                if action.startswith(states.HUMIDITY):
-                    humidity = int(action.split()[-1])
-                    action_data[states.HUMIDITY] = humidity
+                
+                # Handle humidity specially
+                if action.startswith("Humidity"):
+                    try:
+                        humidity = int(action.split()[-1])
+                        if 0 <= humidity <= 100:
+                            action_data["humidity"] = humidity
+                        else:
+                            raise ValueError("Humidity must be between 0 and 100")
+                    except ValueError as e:
+                        message = f"Invalid humidity value: {str(e)}"
+                        return render_template('control_panel.html', message=message)
                 
                 # Send to planner queue
                 with RabbitMQHelper() as helper:
