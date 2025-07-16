@@ -40,3 +40,14 @@ NOTIFICATIONS = [
     ISSUE_NO_ALERT, EXPECTING_RAIN_WARNING, 
     EXPECTING_RAIN_ALERT
     ]
+
+
+INFO_MESSAGES = {
+    'assess_humidity_comfort': 'Assessing humidity comfort level',
+    'assess_temperature_comfort': 'Assessing temperature comfort level',
+    'establish_climate_optimality': 'Climate conditions are optimal',
+    'confirm_water_managed': 'Water management status confirmed',
+    'expecting_rain_alert': 'Rain is expected soon',
+    'configure_roof_for_protection': 'Configuring roof for protection',
+    'configure_roof_for_ventilation': 'Configuring roof for ventilation'
+}

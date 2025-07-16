@@ -11,6 +11,7 @@ from water_pump_module import WaterPumpModule
 from env_sensors import sensor_loop, HumiditySensor
 from roof_module import RoofModule
 
+
 class RabbitMQClient:
     def __init__(self, config=None):
         if config is None:
@@ -77,7 +78,12 @@ class RabbitMQClient:
 def invoke_action(action, client):
     print(f"Invoking action: {action}")
     
-    # If action is a string starting with "Humidity"
+    # First check if it's an informational message
+    if action in states.INFO_MESSAGES:
+        print(f"Info: {states.INFO_MESSAGES[action]}")
+        return
+        
+    # Handle actual control actions
     if isinstance(action, str) and action.startswith("Humidity"):
         try:
             humidity_value = int(action.split()[-1])
@@ -87,30 +93,36 @@ def invoke_action(action, client):
         except (ValueError, IndexError) as e:
             print(f"Error parsing humidity value: {e}")
             return
-    
-    # Use the pre-instantiated modules from the client
-    if action == states.FAN_ON:
+    elif action == states.FAN_ON:
         client.fan.turn_on()
+        print("Action: Turning fan on")
     elif action == states.FAN_OFF:
         client.fan.turn_off()
+        print("Action: Turning fan off")
     elif action == states.WATER_PUMP_ON:
         client.water_pump.turn_on()
+        print("Action: Starting water pump")
     elif action == states.WATER_PUMP_OFF:
         client.water_pump.turn_off()
+        print("Action: Stopping water pump")
     elif action.startswith("run_servo"):
         servo = action.split()[-1]
         if servo == "s1":
             client.roof.open_roof(states.RUN_ROOF_SERVO_S1)
+            print("Action: Opening roof servo 1")
         elif servo == "s2":
             client.roof.open_roof(states.RUN_ROOF_SERVO_S2)
+            print("Action: Opening roof servo 2")
     elif action.startswith("close_servo"):
         servo = action.split()[-1]
         if servo == "s1":
             client.roof.close_roof(states.CLOSE_ROOF_SERVO_S1)
+            print("Action: Closing roof servo 1")
         elif servo == "s2":
             client.roof.close_roof(states.CLOSE_ROOF_SERVO_S2)
+            print("Action: Closing roof servo 2")
     else:
-        print(action)
+        print(f"Unknown action: {action}")
 
 def main():
     client = RabbitMQClient()
