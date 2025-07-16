@@ -78,7 +78,7 @@ def control_panel():
                     "action": action
                 }
                 
-                # Handle humidity specially
+                
                 if action.startswith("Humidity"):
                     try:
                         humidity = int(action.split()[-1])
