@@ -10,9 +10,24 @@ from water_tank_level_sensor import WaterTankLevelSensor
 from soil_moisture_sensor import SoilMoistureSensor
 
 class HumiditySensor:
+    def __init__(self):
+        self._target_humidity = 55  # default value
+        self._current_humidity = 55
+
     def get_reading(self):
-        return 55  # percent
-    
+        # Gradually move current humidity towards target
+        if self._current_humidity < self._target_humidity:
+            self._current_humidity += 1
+        elif self._current_humidity > self._target_humidity:
+            self._current_humidity -= 1
+        return self._current_humidity
+
+    def set_target_humidity(self, value):
+        if 0 <= value <= 100:
+            self._target_humidity = value
+        else:
+            raise ValueError("Humidity must be between 0 and 100")
+
 
 def sensor_loop(rabbitmq_client, interval=5):
     """
@@ -35,7 +50,7 @@ def sensor_loop(rabbitmq_client, interval=5):
     channel = connection.channel()
     channel.queue_declare(queue=rabbitmq["sensor_queue"])
 
-    humidity_sensor = HumiditySensor()
+    humidity_sensor = rabbitmq_client.humidity_sensor
     temperature_sensor = TemperatureSensor(analog_port=TEMPERATURE_GPIO)  # A0
     soil_moisture_sensor = SoilMoistureSensor(analog_port=SOIL_MOISTURE_GPIO) # A1
     water_level_sensor = WaterTankLevelSensor(digital_port=WATER_TANK_GPIO, tank_height=WATER_TANK_HEIGHT)  # D4, 100cm tank

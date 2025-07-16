@@ -2,6 +2,7 @@ import psycopg2
 from datetime import datetime
 import json
 import os
+import bcrypt
 
 conn_str = os.environ.get("POSTGRESQL_CONNECTION_STRING").strip()
 
@@ -84,6 +85,40 @@ def get_pddl_problem(problem_id):
         if conn:
             conn.close()
 
+
+def verify_password(stored_hash, provided_password):
+    try:
+        stored_hash_bytes = stored_hash.encode('utf-8')
+        return bcrypt.checkpw(provided_password.encode('utf-8'), stored_hash_bytes)
+    except Exception as e:
+        print(f"Password verification error: {str(e)}")
+        return False
+
+def check_control_panel_password(password):
+    if not password or not isinstance(password, str) or len(password) == 0:
+        return False
+
+    conn = None
+    cur = None
+    try:
+        conn = psycopg2.connect(conn_str)
+        cur = conn.cursor()
+        select_query = "SELECT value FROM keys WHERE name = 'control_panel_password'"
+        cur.execute(select_query)
+        stored_hash = cur.fetchone()[0]
+        row = cur.fetchone()
+        if verify_password(stored_hash, password):
+            return True
+        else:
+            return False
+    except Exception as e:
+        print(f"Error: {e}")
+        return False
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
 
 def get_last_n_pddl_problems(n=5):
     conn = None

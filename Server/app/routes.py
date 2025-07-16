@@ -4,8 +4,15 @@ from app import app
 from flask import request, jsonify, render_template, current_app
 
 from .ai import pddl as ai
-from app.db.sqldb import get_last_n_pddl_problems, get_recent_weather_forecast
+from app.db.sqldb import get_last_n_pddl_problems, get_recent_weather_forecast, check_control_panel_password
 from app.db.timeseriesdb import get_sensor_timeseries_data, get_avg_tank_level_mean
+from app.utils.rabbitmq_helper import RabbitMQHelper
+from app.utils.config import load_config
+import app.utils.state_constants as states
+import psycopg2
+import json
+import os
+from functools import wraps
 
 
 
@@ -53,10 +60,34 @@ def control_panel():
     if request.method == 'POST':
         password = request.form.get('password', '')
         action = request.form.get('action', '')
-        if password == "admin123":
-            message = f"Action '{action}' executed successfully!"
-        else:
-            message = "Invalid password."
+        
+        try:
+            if check_control_panel_password(password):
+                # Handle the action
+                config = load_config()
+                planner_queue = config["rabbitmq"].get("planner_queue", "planner_queue")
+                
+                action_data = {
+                    "action": action
+                }
+                print(action_data)
+                # If it's a humidity action, parse the value
+                if action.startswith(states.HUMIDITY):
+                    humidity = int(action.split()[-1])
+                    action_data[states.HUMIDITY] = humidity
+                
+                # Send to planner queue
+                with RabbitMQHelper() as helper:
+                    helper.send_message(planner_queue, json.dumps(action_data))
+                
+                message = f"Action '{action}' executed successfully!"
+            else:
+                message = "Invalid password."
+                
+        except Exception as e:
+            message = f"Error executing action: {str(e)}"
+            print(f"Control panel error: {str(e)}")
+                
     return render_template('control_panel.html', message=message)
 
 

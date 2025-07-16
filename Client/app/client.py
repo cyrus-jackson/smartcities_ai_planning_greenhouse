@@ -8,7 +8,7 @@ from state_manager import StateManager
 
 from fan_module import FanModule
 from water_pump_module import WaterPumpModule
-from env_sensors import sensor_loop
+from env_sensors import sensor_loop, HumiditySensor
 from roof_module import RoofModule
 
 class RabbitMQClient:
@@ -35,6 +35,7 @@ class RabbitMQClient:
         self.fan = FanModule(self.state_manager, relay_port=FAN_GPIO)
         self.water_pump = WaterPumpModule(self.state_manager, gpio_pin=WATER_PUMP_GPIO, auto_shutoff_duration=6)
         self.roof = RoofModule(self.state_manager)
+        self.humidity_sensor = HumiditySensor()
 
     def send_to_sensor_queue(self, message):
         self.channel.basic_publish(
@@ -76,6 +77,12 @@ class RabbitMQClient:
 
 def invoke_action(action, client):
     print(f"Invoking action: {action}")
+    if action == states.HUMIDITY:
+        # Handle humidity action
+        humidity_value = int(action.split()[-1])
+        client.humidity_sensor.set_humidity(humidity_value)
+        print(f"Setting humidity to {humidity_value}%")
+    
     # Use the pre-instantiated modules from the client
     if action == states.FAN_ON:
         client.fan.turn_on()

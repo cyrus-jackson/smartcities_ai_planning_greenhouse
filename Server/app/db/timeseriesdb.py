@@ -152,10 +152,23 @@ def get_data():
     fluents = get_fluent_means(client, plan_id)
     init = get_init_state(client, plan_id)
     data = {
-        "name": f"plan_{plan_id}",
+        "name": f"plan_{str(plan_id)}",
         "fluents": fluents,
         "init": init,
-        "goals": sample_data["goals"],
+        "goals": [
+            {
+            "type": "and",
+            "states": [
+                "climate_optimal",
+                "water_managed", 
+                "roof_properly_configured"
+            ]
+            }
+        ],
+        "objects": {
+            "servo": ["s1", "s2"],
+            "alert-level": ["high", "warning", "none", "rain-expected"]
+        }
     }
     print(data)
     return data
