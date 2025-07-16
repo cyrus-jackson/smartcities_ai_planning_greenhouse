@@ -51,8 +51,7 @@ class RabbitMQClient:
                 print(f"Received: {msg}")
                 actions = json.loads(msg)
                 print(actions)
-                plan_id = actions[states.PLAN_ID]
-                self.state_manager.update_plan(plan_id)
+                self.state_manager.update_plan(actions[states.PLAN_ID]) if states.PLAN_ID in actions else None
                 for act in actions:
                     if act == states.PLAN_ID:
                         continue
@@ -77,7 +76,7 @@ class RabbitMQClient:
 
 def invoke_action(action, client):
     print(f"Invoking action: {action}")
-    if action == states.HUMIDITY:
+    if action.startswith(states.HUMIDITY):
         # Handle humidity action
         humidity_value = int(action.split()[-1])
         client.humidity_sensor.set_humidity(humidity_value)
