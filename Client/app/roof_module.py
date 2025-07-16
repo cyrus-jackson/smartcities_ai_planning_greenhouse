@@ -18,10 +18,10 @@ class RoofModule:
     def open_roof(self, servo_state):
         """Open roof servo to 90 degrees"""
         try:
-            servo = self.servo_1 if "s1" in servo_state else self.servo_2
+            port = self.servo_1 if "s1" in servo_state else self.servo_2
             servo_angle = 90  # or adjust as needed for your hardware
-            servo(servo, servo_angle)
-            print(f"RoofModule: Opening roof servo {servo} to {servo_angle} degrees")
+            servo(port, servo_angle)
+            print(f"RoofModule: Opening roof servo {port} to {servo_angle} degrees")
             self.state_manager.update_state(servo_state)
         except Exception as e:
             print(f"Error opening roof servo: {e}")
@@ -29,10 +29,10 @@ class RoofModule:
     def close_roof(self, servo_state):
         """Close roof servo to 0 degrees"""
         try:
-            servo = self.servo_1 if "s1" in servo_state else self.servo_2
+            port = self.servo_1 if "s1" in servo_state else self.servo_2
             servo_angle = 0
-            servo(servo, servo_angle)
-            print(f"RoofModule: Closing roof servo {servo} to {servo_angle} degrees")
+            servo(port, servo_angle)
+            print(f"RoofModule: Closing roof servo {port} to {servo_angle} degrees")
             self.state_manager.update_state(servo_state)
         except Exception as e:
             print(f"Error closing roof servo: {e}")
