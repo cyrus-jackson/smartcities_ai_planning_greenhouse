@@ -23,6 +23,7 @@ class HumiditySensor:
         return self._current_humidity
 
     def set_target_humidity(self, value):
+        print("Humidity: Value to be set: " + str(value))
         if 0 <= value <= 100:
             self._target_humidity = value
         else:

@@ -77,10 +77,9 @@ class RabbitMQClient:
 def invoke_action(action, client):
     print(f"Invoking action: {action}")
     if action.startswith(states.HUMIDITY):
-        # Handle humidity action
         humidity_value = int(action.split()[-1])
-        client.humidity_sensor.set_humidity(humidity_value)
-        print(f"Setting humidity to {humidity_value}%")
+        client.humidity_sensor.set_target_humidity(humidity_value)  # Correct method name
+        print(f"Setting target humidity to {humidity_value}%")
     
     # Use the pre-instantiated modules from the client
     if action == states.FAN_ON:
