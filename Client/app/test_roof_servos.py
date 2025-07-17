@@ -1,58 +1,36 @@
+import RPi.GPIO as GPIO
 import time
-from grovepi import pinMode, servo
+from numpy import interp
 
-# Define the GrovePi+ digital ports for the servos
-SERVO_1_GPIO = 3  # D3
-SERVO_2_GPIO = 8  # D8
+SERVO_GPIO = 26  # BCM numbering (physical pin 37)
 
-def test_servos():
-    print("Initializing servos...")
-    try:
-        pinMode(SERVO_1_GPIO, "OUTPUT")
-        pinMode(SERVO_2_GPIO, "OUTPUT")
-        print("Servos initialized successfully.")
-    except Exception as e:
-        print(f"Error initializing servos: {e}")
-        return
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(SERVO_GPIO, GPIO.OUT)
 
-    try:
-        # Test open (90 degrees)
-        print("Opening Servo 1 (D3) to 90 degrees")
-        servo(SERVO_1_GPIO, 90)
-        time.sleep(2)
+# 50Hz PWM (standard for servos)
+pwm = GPIO.PWM(SERVO_GPIO, 50)
+pwm.start(2.5)  # Initial duty cycle
 
-        print("Opening Servo 2 (D8) to 90 degrees")
-        servo(SERVO_2_GPIO, 90)
-        time.sleep(2)
+def set_angle(angle):
+    # Clamp angle and map to duty cycle
+    angle = max(0, min(180, angle))
+    duty = interp(angle, [0, 180], [2.5, 12.5])
+    pwm.ChangeDutyCycle(duty)
 
-        # Test close (0 degrees)
-        print("Closing Servo 1 (D3) to 0 degrees")
-        servo(SERVO_1_GPIO, 0)
-        time.sleep(2)
-
-        print("Closing Servo 2 (D8) to 0 degrees")
-        servo(SERVO_2_GPIO, 0)
-        time.sleep(2)
-
-        # Test full range (optional)
-        print("Moving Servo 1 (D3) to 170 degrees")
-        servo(SERVO_1_GPIO, 170)
-        time.sleep(2)
-        print("Returning Servo 1 (D3) to 0 degrees")
-        servo(SERVO_1_GPIO, 0)
-        time.sleep(2)
-
-        print("Moving Servo 2 (D8) to 170 degrees")
-        servo(SERVO_2_GPIO, 170)
-        time.sleep(2)
-        print("Returning Servo 2 (D8) to 0 degrees")
-        servo(SERVO_2_GPIO, 0)
-        time.sleep(2)
-
-        print("Servo test complete.")
-
-    except Exception as e:
-        print(f"Error during servo test: {e}")
-
-if __name__ == "__main__":
-    test_servos()
+try:
+    while True:
+        print("Moving to 0°")
+        set_angle(0)
+        time.sleep(1)
+        print("Moving to 90°")
+        set_angle(90)
+        time.sleep(1)
+        print("Moving to 180°")
+        set_angle(180)
+        time.sleep(1)
+except KeyboardInterrupt:
+    pass
+finally:
+    pwm.stop()
+    GPIO.cleanup()
