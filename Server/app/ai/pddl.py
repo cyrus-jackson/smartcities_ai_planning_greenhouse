@@ -84,23 +84,7 @@ def parse_enhsp_output(response_json, fluents):
             tokens = action.split()
             act = tokens[0]
 
-            # Map PDDL actions to state_constants
-            if act == "turn_on_fan":
-                parsed[step_num] = states.FAN_ON
-            elif act == "turn_off_fan":
-                parsed[step_num] = states.FAN_OFF
-            elif act == "open_roof":
-                servo = tokens[-1]
-                parsed[step_num] = f"servo_on {servo}"
-            elif act == "close_roof":
-                servo = tokens[-1]
-                parsed[step_num] = f"not (servo) {servo}"
-            elif act == "turn_on_pump":
-                parsed[step_num] = states.WATER_PUMP_ON
-            elif act == "turn_off_pump":
-                parsed[step_num] = states.WATER_PUMP_OFF
-            else:
-                parsed[step_num] = action  # keep as-is for info/assessment actions
+            parsed[step_num] = action  # keep as-is for info/assessment actions
 
             # Process notification actions
             notif = process_notification_actions(act, fluents)
