@@ -95,11 +95,11 @@ def invoke_action(action, client):
                 client.fan.turn_off()
                 print("Action: Turning fan off")
             elif act == "open_roof":
-                servo = tokens[1]
+                servo = tokens[-1]  # Use last token for servo
                 client.roof.open_roof(f"servo_on {servo}")
                 print(f"Action: Opening roof servo {servo}")
             elif act == "close_roof":
-                servo = tokens[1]
+                servo = tokens[-1]
                 client.roof.close_roof(f"servo_on {servo}")
                 print(f"Action: Closing roof servo {servo}")
             elif act == "turn_on_pump":
@@ -108,6 +108,8 @@ def invoke_action(action, client):
             elif act == "turn_off_pump":
                 client.water_pump.turn_off()
                 print("Action: Turning water pump off")
+            elif act in states.INFO_MESSAGES:
+                print(f"Info: {states.INFO_MESSAGES[act]}")
             else:
                 print(f"Unknown action: {action}")
     except Exception as e:
