@@ -22,5 +22,5 @@
    {{ goal }}
 {% endfor %}
  ){% endif %})
- (:metric minimize (total-cost))
+ (:metric maximize (total-cost))
 )

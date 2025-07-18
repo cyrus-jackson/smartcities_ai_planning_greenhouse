@@ -1,27 +1,34 @@
 {
- "name": "independent_greenhouse_case",
- "fluents": {
-  "temperature-threshold": 25,
-  "temperature-reading ts1": 88,
-  "humidity-threshold": 25,
-  "humidity-reading hs1": 1032,
-  "cooling-rate fan1": 5,
-  "required-duration fan1": 190,
-  "servo-cooling-rate s1": 1,
-  "servo-duration s1": 100,
-  "total-cost": 0
- },
- "init": [
-  "not (fan_on fan1)",
-  "not (servo_on s1)"
- ],
- "goals": [
-  "(< (temperature-reading ts1) (temperature-threshold))",
-  "(< (humidity-reading hs1) (humidity-threshold))"
- ],
- "objects": {
-  "sensor": ["ts1", "hs1"],
-  "fan": ["fan1"],
-  "servo": ["s1"]
- }
+  "name": "greenhouse_correct_fan_servo_state",
+  "fluents": {
+    "temperature-threshold": 25,
+    "temperature-reading ts1": 131,
+    "humidity-threshold": 25,
+    "humidity-reading hs1": 21,
+    "soil_moisture ss": 30,
+    "soil_moisture_threshold":35,
+    "water_tank_level wl": 55,
+    "water_level_threshold": 20,
+    "cooling-rate fan1": 2,
+    "required-duration fan1": 100,
+    "servo-cooling-rate s1": 1,
+    "servo-duration s1": 100,
+    "total-cost": 0
+  },
+  "init": [
+    "not (fan_on fan1)",
+    "not (servo_on s1)"
+    ],
+  "goals": [
+    "(temperature_comfortable)",
+    "(humidity_comfortable)",
+    "(soil_moisture_adequate)"
+  ],
+  "objects": {
+    "sensor": ["ts1", "hs1", "ss", "wl"],
+    "fan": ["fan1"],
+    "servo": ["s1"],
+    "motor": ["mp1"]
+  },
+  "metric": "minimize"
 }

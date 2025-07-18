@@ -1,88 +1,180 @@
 (define (domain greenhouse)
- (:requirements :strips :typing :numeric-fluents)
- (:types
-  actuator sensor - object
-  fan servo - actuator
- )
- (:predicates
-  (fan_on ?f - fan)
-  (servo_on ?s - servo)
- )
- (:functions
-  (temperature-reading ?ts - sensor)
-  (temperature-threshold)
-  (humidity-reading ?hs - sensor)
-  (humidity-threshold)
-  (cooling-rate ?f - fan)
-  (required-duration ?f - fan)
-  (servo-cooling-rate ?s - servo)
-  (servo-duration ?s - servo)
-  (total-cost)
- )
+  (:requirements :strips :typing :numeric-fluents)
+  (:types
+    actuator sensor - object
+    fan servo motor - actuator
+  )
 
- ;; Fan actions - work independently
- (:action turn_on_fan
-  :parameters (?ts - sensor ?hs - sensor ?f - fan)
-  :precondition (and
-   (not (fan_on ?f))
-   (or
-    (>= (temperature-reading ?ts) (temperature-threshold))
-    (>= (humidity-reading ?hs) (humidity-threshold))
-   )
-  )
-  :effect (and
-   (fan_on ?f)
-   (decrease (temperature-reading ?ts)
-    (* (required-duration ?f) (cooling-rate ?f)))
-   (decrease (humidity-reading ?hs)
-    (* (required-duration ?f) (cooling-rate ?f)))
-   (increase (total-cost) 10)
-  )
- )
+  (:predicates
+    (fan_on ?f - fan)
+    (servo_on ?s - servo)
+    (water_pump_on ?m - motor)
 
- (:action turn_off_fan
-  :parameters (?ts - sensor ?hs - sensor ?f - fan)
-  :precondition (and
-   (fan_on ?f)
-   (< (temperature-reading ?ts) (temperature-threshold))
-   (< (humidity-reading ?hs) (humidity-threshold))
-  )
-  :effect (and
-   (not (fan_on ?f))
-   (increase (total-cost) 1)
-  )
- )
+    (temperature_comfortable)
+    (humidity_comfortable)
+    (soil_moisture_adequate)
 
- ;; Servo/roof actions - work independently
- (:action open_roof
-  :parameters (?ts - sensor ?hs - sensor ?s - servo)
-  :precondition (and
-   (not (servo_on ?s))
-   (or
-    (>= (temperature-reading ?ts) (temperature-threshold))
-    (>= (humidity-reading ?hs) (humidity-threshold))
-   )
+    (temperature_assessed)
+    (humidity_assessed)
+    (soil_assessed)
   )
-  :effect (and
-   (servo_on ?s)
-   (decrease (temperature-reading ?ts)
-    (* (servo-duration ?s) (servo-cooling-rate ?s)))
-   (decrease (humidity-reading ?hs)
-    (* (servo-duration ?s) (servo-cooling-rate ?s)))
-   (increase (total-cost) 10)
-  )
- )
 
- (:action close_roof
-  :parameters (?ts - sensor ?hs - sensor ?s - servo)
-  :precondition (and
-   (servo_on ?s)
-   (< (temperature-reading ?ts) (temperature-threshold))
-   (< (humidity-reading ?hs) (humidity-threshold))
+  (:functions
+    ;; Climate sensor readings
+    (temperature-reading ?ts - sensor)
+    (temperature-threshold)
+
+    (humidity-reading ?hs - sensor)
+    (humidity-threshold)
+
+    ;; Soil & water
+    (soil_moisture ?ss - sensor)
+    (soil_moisture_threshold)
+
+    (water_tank_level ?wl - sensor)
+    (water_level_threshold)
+
+    ;; Cooling parameters
+    (cooling-rate ?f - fan)
+    (required-duration ?f - fan)
+
+    (servo-cooling-rate ?s - servo)
+    (servo-duration ?s - servo)
+
+    ;; Cost metric
+    (total-cost)
   )
-  :effect (and
-   (not (servo_on ?s))
-   (increase (total-cost) 1)
+
+  ;; === FAN ACTIONS ===
+  (:action turn_on_fan
+    :parameters (?ts - sensor ?hs - sensor ?f - fan)
+    :precondition (and
+      (not (fan_on ?f))
+      (or
+        (>= (temperature-reading ?ts) (temperature-threshold))
+        (>= (humidity-reading ?hs) (humidity-threshold))
+      )
+    )
+    :effect (and
+      (fan_on ?f)
+      (decrease (temperature-reading ?ts)
+        (* (cooling-rate ?f) (required-duration ?f)))
+      (decrease (humidity-reading ?hs)
+        (* (cooling-rate ?f) (required-duration ?f)))
+      (increase (total-cost) 15)
+    )
   )
- )
+
+  (:action turn_off_fan
+    :parameters (?ts - sensor ?hs - sensor ?f - fan)
+    :precondition (and
+      (fan_on ?f)
+      (< (temperature-reading ?ts) (temperature-threshold))
+      (< (humidity-reading ?hs) (humidity-threshold))
+      (temperature_assessed)
+      (humidity_assessed)
+    )
+    :effect (not (fan_on ?f))
+  )
+
+  ;; === SERVO / ROOF ACTIONS ===
+  (:action open_roof
+    :parameters (?ts - sensor ?hs - sensor ?s - servo)
+    :precondition (and
+      (not (servo_on ?s))
+      (or
+        (>= (temperature-reading ?ts) (temperature-threshold))
+        (>= (humidity-reading ?hs) (humidity-threshold))
+      )
+    )
+    :effect (and
+      (servo_on ?s)
+      (decrease (temperature-reading ?ts)
+        (* (servo-cooling-rate ?s) (servo-duration ?s)))
+      (decrease (humidity-reading ?hs)
+        (* (servo-cooling-rate ?s) (servo-duration ?s)))
+      (increase (total-cost) 10)
+    )
+  )
+
+  (:action close_roof
+    :parameters (?ts - sensor ?hs - sensor ?s - servo)
+    :precondition (and
+      (servo_on ?s)
+      (< (temperature-reading ?ts) (temperature-threshold))
+      (< (humidity-reading ?hs) (humidity-threshold))
+      (temperature_assessed)
+      (humidity_assessed)
+    )
+    :effect (and
+      (not (servo_on ?s))
+      (increase (total-cost) 1)
+    )
+  )
+
+  ;; === WATER PUMP ACTIONS ===
+  (:action turn_on_pump
+    :parameters (?ss - sensor ?wl - sensor ?m - motor)
+    :precondition (and 
+      (not (water_pump_on ?m))
+      (>= (water_tank_level ?wl) (water_level_threshold))
+      (< (soil_moisture ?ss) (soil_moisture_threshold))
+    )
+    :effect (and 
+      (water_pump_on ?m)
+      (increase (soil_moisture ?ss) 10)
+      (increase (total-cost) 5)
+    )
+  )
+
+  (:action turn_off_pump
+    :parameters (?ss - sensor ?wl - sensor ?m - motor)
+    :precondition (and 
+      (water_pump_on ?m)
+      (soil_assessed)
+      (or
+        (< (water_tank_level ?wl) (water_level_threshold))
+        (>= (soil_moisture ?ss) (soil_moisture_threshold))
+      )
+    )
+    :effect (not (water_pump_on ?m))
+  )
+
+  ;; === COMFORT ASSESSMENT ACTIONS ===
+  (:action assess_temperature_comfort
+    :parameters (?ts - sensor)
+    :precondition (and
+      (not (temperature_comfortable))
+      (<= (temperature-reading ?ts) (temperature-threshold))
+    )
+    :effect (and
+      (temperature_comfortable)
+      (temperature_assessed)
+    )
+  )
+
+  (:action assess_humidity_comfort
+    :parameters (?hs - sensor)
+    :precondition (and
+      (not (humidity_comfortable))
+      (<= (humidity-reading ?hs) (humidity-threshold))
+    )
+    :effect (and
+      (humidity_comfortable)
+      (humidity_assessed)
+    )
+  )
+
+  (:action assess_soil_moisture_adequacy
+    :parameters (?ss - sensor)
+    :precondition (and
+      (not (soil_moisture_adequate))
+      (>= (soil_moisture ?ss) (soil_moisture_threshold))
+    )
+    :effect (and
+      (soil_moisture_adequate)
+      (soil_assessed)
+    )
+  )
+
 )
