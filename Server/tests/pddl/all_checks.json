@@ -1,27 +1,27 @@
 {
-  "name": "improved_greenhouse_case",
-  "fluents": {
-    "hours_until_rain": 90,
-    "water_tank_level": 35,
-    "temperature": 98.8,
-    "humidity": 95.01,
-    "soil_moisture": 90
-  },
-  "init": [
-    "outside_environment_safe"
-  ],
-  "goals": [
-    {
-      "type": "and",
-      "states": [
-        "climate_optimal",
-        "water_managed", 
-        "roof_properly_configured"
-      ]
-    }
-  ],
-  "objects": {
-    "servo": ["s1", "s2"],
-    "alert-level": ["high", "warning", "none", "rain-expected"]
-  }
+ "name": "independent_greenhouse_case",
+ "fluents": {
+  "temperature-threshold": 25,
+  "temperature-reading ts1": 8,
+  "humidity-threshold": 25,
+  "humidity-reading hs1": 175,
+  "cooling-rate fan1": 15,
+  "required-duration fan1": 12,
+  "servo-cooling-rate s1": 30,
+  "servo-duration s1": 10,
+  "total-cost": 0
+ },
+ "init": [
+  "not (fan_on fan1)",
+  "not (servo_on s1)"
+ ],
+ "goals": [
+  "(< (temperature-reading ts1) (temperature-threshold))",
+  "(< (humidity-reading hs1) (humidity-threshold))"
+ ],
+ "objects": {
+  "sensor": ["ts1", "hs1"],
+  "fan": ["fan1"],
+  "servo": ["s1"]
+ }
 }
