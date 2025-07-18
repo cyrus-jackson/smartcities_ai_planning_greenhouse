@@ -4,7 +4,7 @@ from app import app
 from flask import request, jsonify, render_template, current_app
 
 from .ai import pddl as ai
-from app.db.sqldb import get_last_n_pddl_problems, get_recent_weather_forecast, check_control_panel_password
+from app.db.sqldb import get_last_n_pddl_problems, get_recent_weather_forecast, check_control_panel_password, get_all_configs
 from app.db.timeseriesdb import get_sensor_timeseries_data, get_avg_tank_level_mean
 from app.utils.rabbitmq_helper import RabbitMQHelper
 from app.utils.config import load_config
@@ -52,6 +52,8 @@ def get_notifications():
     return_data["currentStates"] = ai.get_current_states()
     return_data["rainTime"] = ai.get_rain_hours()
     return_data["waterLevel"] = ai.get_water_tank_level()
+    # Add configs to the response
+    return_data["configs"] = get_all_configs()
     return jsonify(return_data)
 
 @app.route('/control', methods=['GET', 'POST'])
@@ -103,5 +105,23 @@ def control_panel():
             print(f"Control panel error: {str(e)}")
                 
     return render_template('control_panel.html', message=message)
+
+@app.route('/configs')
+def configs():
+    configs = get_all_configs()
+    return render_template('configs.html', configs=configs)
+
+@app.route('/update_config', methods=['POST'])
+def update_config():
+    try:
+        data = request.get_json()
+        name = data.get('name')
+        value = float(data.get('value'))
+        
+        if update_config(name, value):
+            return jsonify({"status": "success"})
+        return jsonify({"status": "error", "message": "Failed to update config"}), 500
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 

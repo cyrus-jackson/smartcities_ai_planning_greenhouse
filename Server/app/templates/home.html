@@ -635,9 +635,20 @@
             });
         }
 
-        // Add active state entries
+        // Add config values
+        if (globalCurrentStates.configs) {
+            for (const [key, value] of Object.entries(globalCurrentStates.configs)) {
+                allStates.push({
+                    key: key,
+                    label: `${key.replace(/_/g, ' ')}: ${value}`,
+                    icon: '⚙️'
+                });
+            }
+        }
+
+        // Add active state entries (as before)
         for (const [key, value] of Object.entries(globalCurrentStates)) {
-            if (key === 'PLAN_ID' || value !== 1) continue;
+            if (key === 'PLAN_ID' || key === 'configs' || value !== 1) continue;
 
             const parts = key.split(' ');
             const baseKey = parts[0];

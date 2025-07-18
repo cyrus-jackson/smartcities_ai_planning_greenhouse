@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import certifi
 from influxdb_client_3 import InfluxDBClient3, Point, flight_client_options
+from app.db.sqldb import get_all_configs
 
 token = os.environ.get("INFLUXDB_TOKEN").strip()
 org = os.environ.get("INFLUXDB_ORG").strip()
@@ -16,26 +17,45 @@ cert = fh.read()
 fh.close()
 
 sample_data = {
-    "name": "all_checks_case",
+    "name": "greenhouse_problem",
     "fluents": {
-        "hours_until_rain": 40.0,
-        "water_tank_level": 70.0,
-        "temperature": 50.0,
-        "humidity": 50.1
+        "temperature-threshold": 25,
+        "temperature-reading ts1": 20,
+        "humidity-threshold": 25,
+        "humidity-reading hs1": 21,
+        "soil_moisture ss": 30,
+        "soil_moisture_threshold": 35,
+        "cooling-rate fan1": 2,
+        "required-duration fan1": 100,
+        "servo-cooling-rate s1": 1,
+        "servo-duration s1": 100,
+        "total-cost": 0,
+        "water_tank_level wl": 10,
+        "water_level_threshold": 20,
+        "hours_until_rain": 10,
+        "water_alert_high_threshold": 10,
+        "water_alert_warning_threshold": 50,
+        "rain_expected_threshold": 30
     },
     "init": [
-        "outside_environment_safe",
-        "close_servo s1",
-        "run_servo s2",
-        "fan_on"
+        "not (fan_on fan1)",
+        "not (servo_on s1)"
     ],
     "goals": [
-        {
-            "type": "or",
-            "states": ["keep_greenhouse_comfortable"]
-        }
-    ]
-}
+        "(temperature_comfortable)",
+        "(humidity_comfortable)",
+        "(soil_moisture_adequate)",
+        "(water_managed)"
+    ],
+    "objects": {
+        "sensor": ["ts1", "hs1", "ss", "wl"],
+        "fan": ["fan1"],
+        "servo": ["s1"],
+        "motor": ["mp1"],
+        "alert-level": ["high", "warning", "none", "rain-expected"]
+    },
+    "metric": "minimize"
+    }
 
 def validate_fluents(fluents):
     for key in sample_data["fluents"]:
@@ -70,18 +90,18 @@ def get_latest_plan_id(client):
 def get_avg_tank_level_mean():
     client = _InfluxSingleton.get_client()
     query = f'''
-        SELECT AVG("{states.WATER_LEVEL}") FROM "greenhouse_sensors" WHERE time >= now() - interval '5 minute'
+        SELECT AVG("{states.WATER_TANK_LEVEL}") FROM "greenhouse_sensors" WHERE time >= now() - interval '5 minute'
     '''
     result = client.query(query, database=database)
     
     df = result.to_pandas()
-    col_name = f'avg(greenhouse_sensors.{states.WATER_LEVEL})'
+    col_name = f'avg(greenhouse_sensors.{states.WATER_TANK_LEVEL})'
     print(df[col_name].iloc[0])
     return df[col_name].iloc[0]
 
 def get_sensor_means(client, plan_id):
     fluents = {}
-    for fluent in [states.TEMPERATURE, states.HUMIDITY, states.WATER_LEVEL]:
+    for fluent in [states.TEMPERATURE_READING, states.HUMIDITY_READING, states.WATER_TANK_LEVEL]:
         query = f'''
             SELECT AVG("{fluent}") FROM "greenhouse_sensors"
             WHERE "{states.PLAN_ID}" = '{plan_id}'
@@ -121,8 +141,12 @@ def get_fluent_means(client, plan_id):
     fluents = get_sensor_means(client, plan_id)
     hours_until_rain = get_latest_hours_until_rain()
     if hours_until_rain is not None:
-        fluents["hours_until_rain"] = hours_until_rain
+        fluents[states.HOURS_UNTIL_RAIN] = hours_until_rain
     fluents = validate_fluents(fluents)
+    # Fetch configs from db and update fluents
+    configs = get_all_configs()
+    if configs:
+        fluents.update(configs)
     return fluents
 
 def get_init_state(client, plan_id):
@@ -143,7 +167,7 @@ def get_init_state(client, plan_id):
     return init
 
 def get_data():
-    # return sample_data
+    return sample_data
     client = _InfluxSingleton.get_client()
     plan_id = get_latest_plan_id(client)
     if plan_id is None:
@@ -156,19 +180,19 @@ def get_data():
         "fluents": fluents,
         "init": init,
         "goals": [
-            {
-            "type": "and",
-            "states": [
-                "climate_optimal",
-                "water_managed", 
-                "roof_properly_configured"
-            ]
-            }
+            "(temperature_comfortable)",
+            "(humidity_comfortable)",
+            "(soil_moisture_adequate)",
+            "(water_managed)"
         ],
         "objects": {
-            "servo": ["s1", "s2"],
+            "sensor": ["ts1", "hs1", "ss", "wl"],
+            "fan": ["fan1"],
+            "servo": ["s1"],
+            "motor": ["mp1"],
             "alert-level": ["high", "warning", "none", "rain-expected"]
-        }
+        },
+        "metric": "minimize"
     }
     print(data)
     return data
@@ -202,10 +226,10 @@ def write_sensor_data(message_list):
     for message in message_list:
         point = (
             Point("greenhouse_sensors")
-            .field(states.HUMIDITY, message[states.HUMIDITY])
-            .field(states.TEMPERATURE, message[states.TEMPERATURE])
-            .field(states.SOIL_MOISTURE, message[states.SOIL_MOISTURE])
-            .field(states.WATER_LEVEL, message[states.WATER_LEVEL])
+            .field(states.HUMIDITY_READING, message[states.HUMIDITY_READING])
+            .field(states.TEMPERATURE_READING, message[states.TEMPERATURE_READING])
+            .field(states.SOIL_MOISTURE_READING, message[states.SOIL_MOISTURE_READING])
+            .field(states.WATER_TANK_LEVEL, message[states.WATER_TANK_LEVEL])
         )
         # if message.get("plan_id") is not None:
         point = point.tag(states.PLAN_ID, message[states.PLAN_ID])
@@ -254,24 +278,24 @@ def get_sensor_timeseries_data(interval="1h"):
         df = df.reset_index()
 
     result_data = {
-        states.TEMPERATURE: [],
-        states.HUMIDITY: [],
-        states.SOIL_MOISTURE: [],
-        states.WATER_LEVEL: [],
+        states.TEMPERATURE_READING: [],
+        states.HUMIDITY_READING: [],
+        states.SOIL_MOISTURE_READING: [],
+        states.WATER_TANK_LEVEL: [],
         states.PLAN_ID: []
     }
 
     if not df.empty and "time" in df.columns:
         for _, row in df.iterrows():
             time_str = row["time"].strftime("%H:%M")
-            if states.TEMPERATURE in df.columns and row[states.TEMPERATURE] is not None:
-                result_data[states.TEMPERATURE].append({"time": time_str, "value": float(row[states.TEMPERATURE])})
-            if states.HUMIDITY in df.columns and row[states.HUMIDITY] is not None:
-                result_data[states.HUMIDITY].append({"time": time_str, "value": float(row[states.HUMIDITY])})
-            if states.SOIL_MOISTURE in df.columns and row[states.SOIL_MOISTURE] is not None:
-                result_data[states.SOIL_MOISTURE].append({"time": time_str, "value": float(row[states.SOIL_MOISTURE])})
-            if states.WATER_LEVEL in df.columns and row[states.WATER_LEVEL] is not None:
-                result_data[states.WATER_LEVEL].append({"time": time_str, "value": float(row[states.WATER_LEVEL])}) 
+            if states.TEMPERATURE_READING in df.columns and row[states.TEMPERATURE_READING] is not None:
+                result_data[states.TEMPERATURE_READING].append({"time": time_str, "value": float(row[states.TEMPERATURE_READING])})
+            if states.HUMIDITY_READING in df.columns and row[states.HUMIDITY_READING] is not None:
+                result_data[states.HUMIDITY_READING].append({"time": time_str, "value": float(row[states.HUMIDITY_READING])})
+            if states.SOIL_MOISTURE_READING in df.columns and row[states.SOIL_MOISTURE_READING] is not None:
+                result_data[states.SOIL_MOISTURE_READING].append({"time": time_str, "value": float(row[states.SOIL_MOISTURE_READING])})
+            if states.WATER_TANK_LEVEL in df.columns and row[states.WATER_TANK_LEVEL] is not None:
+                result_data[states.WATER_TANK_LEVEL].append({"time": time_str, "value": float(row[states.WATER_TANK_LEVEL])}) 
             # Get plan_id from column if present, else None
             plan_id_val = str(row[plan_id_col]) if plan_id_col in row and row[plan_id_col] is not None else None
             result_data[states.PLAN_ID].append({"time": time_str, "value": plan_id_val})

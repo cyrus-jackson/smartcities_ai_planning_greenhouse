@@ -76,10 +76,10 @@ def sensor_loop(rabbitmq_client, interval=5):
             
             # Create message payload
             message = {
-                states.HUMIDITY: humidity,
-                states.TEMPERATURE: temperature,
-                states.SOIL_MOISTURE: soil_moisture,
-                states.WATER_LEVEL: water_level,
+                states.HUMIDITY_READING: humidity,
+                states.TEMPERATURE_READING: temperature,
+                states.SOIL_MOISTURE_READING: soil_moisture,
+                states.WATER_TANK_LEVEL: water_level,
                 states.PLAN_ID: plan_id
             }
             

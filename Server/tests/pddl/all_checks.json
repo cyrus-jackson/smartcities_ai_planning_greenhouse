@@ -20,8 +20,6 @@
    "rain_expected_threshold": 30
  },
  "init": [
-   "not (fan_on fan1)",
-   "not (servo_on s1)"
  ],
  "goals": [
    "(temperature_comfortable)",

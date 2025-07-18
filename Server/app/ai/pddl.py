@@ -36,7 +36,7 @@ def get_rain_hours():
     return []
 
 def get_water_tank_level():
-    data = redis_client.get(states.WATER_LEVEL)
+    data = redis_client.get(states.WATER_TANK_LEVEL)
     if data:
         return json.loads(data)
     return []
@@ -61,7 +61,7 @@ def process_notification_actions(action, fluents):
             "type": notif_type
         }
     print(fluents)
-    redis_client.set(states.WATER_LEVEL, fluents[states.WATER_LEVEL])
+    redis_client.set(states.WATER_TANK_LEVEL, fluents[states.WATER_TANK_LEVEL])
     return None
 
 def parse_enhsp_output(response_json, fluents):
@@ -108,6 +108,7 @@ def insert_problem(data):
         'domain': pt.get_domain_data(),
         'problem': pt.get_problem_file_with_data(unrendered_data=data)
     }
+    print(req_body['problem'])
     problem_name = "problem_" + str(time.time())
     solve_request_url = requests.post(
         "https://solver.planning.domains:5001/package/enhsp/solve", json=req_body

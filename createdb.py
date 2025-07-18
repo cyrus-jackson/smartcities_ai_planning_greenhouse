@@ -1,3 +1,8 @@
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), 'Server', 'app'))
+from db.sqldb import update_config
+
 import psycopg2
 from psycopg2 import sql, errors
 
@@ -10,6 +15,30 @@ POSTGRES_CONN = {
 }
 
 POSTGRESQL_CONNECTION_STRING="postgresql://postgres:smartcities@localhost:5432/smartcities"
+
+
+def init_configs():
+    
+    # Default values from your JSON
+    default_configs = {
+        "temperature-threshold": 25,
+        "humidity-threshold": 25,
+        "soil_moisture_threshold": 35,
+        "water_level_threshold": 20,
+        "water_alert_high_threshold": 10,
+        "water_alert_warning_threshold": 50,
+        "rain_expected_threshold": 30,
+        "cooling-rate fan1": 2,
+        "required-duration fan1": 100,
+        "servo-cooling-rate s1": 1,
+        "servo-duration s1": 100,
+        "total-cost": 0
+    }
+    
+    # Insert/update each config
+    for name, value in default_configs.items():
+        update_config(name, value)
+
 
 # --- Create Database ---
 def create_database(db_name):
@@ -45,8 +74,14 @@ def create_tables():
         data JSONB NOT NULL
     );
 
-    
-    
+    CREATE TABLE IF NOT EXISTS configs (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL UNIQUE,
+        value FLOAT NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
     """
 
     try:
@@ -61,5 +96,6 @@ def create_tables():
 
 # --- Run ---
 if __name__ == "__main__":
-    create_database("smartcities")
-    create_tables()
+    # create_database("smartcities")
+    # create_tables()
+    init_configs()

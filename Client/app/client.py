@@ -77,43 +77,39 @@ class RabbitMQClient:
 
 def invoke_action(action, client):
     print(f"Invoking action: {action}")
-    
+
     # First check if it's an informational message
     if action in states.INFO_MESSAGES:
         print(f"Info: {states.INFO_MESSAGES[action]}")
         return
-    
+
     try:
-        # Handle actual control actions
         if isinstance(action, str):
-            if action.startswith("Humidity"):
-                humidity_value = int(action.split()[-1])
-                client.humidity_sensor.set_target_humidity(humidity_value)
-                print(f"Setting target humidity to {humidity_value}%")
-            
-            elif action == states.FAN_ON:
+            tokens = action.split()
+            act = tokens[0]
+            # Handle PDDL action names
+            if act == "turn_on_fan":
                 client.fan.turn_on()
                 print("Action: Turning fan on")
-            
-            elif action == states.FAN_OFF:
+            elif act == "turn_off_fan":
                 client.fan.turn_off()
                 print("Action: Turning fan off")
-            
-            elif action.startswith("run_servo"):
-                servo = action.split()[-1]
-                if servo in ["s1", "s2"]:
-                    client.roof.open_roof(action)
-                    print(f"Action: Opening roof servo {servo}")
-            
-            elif action.startswith("close_servo"):
-                servo = action.split()[-1]
-                if servo in ["s1", "s2"]:
-                    client.roof.close_roof(action)
-                    print(f"Action: Closing roof servo {servo}")
-            
+            elif act == "open_roof":
+                servo = tokens[1]
+                client.roof.open_roof(f"servo_on {servo}")
+                print(f"Action: Opening roof servo {servo}")
+            elif act == "close_roof":
+                servo = tokens[1]
+                client.roof.close_roof(f"servo_on {servo}")
+                print(f"Action: Closing roof servo {servo}")
+            elif act == "turn_on_pump":
+                client.water_pump.turn_on()
+                print("Action: Turning water pump on")
+            elif act == "turn_off_pump":
+                client.water_pump.turn_off()
+                print("Action: Turning water pump off")
             else:
                 print(f"Unknown action: {action}")
-                
     except Exception as e:
         print(f"Error executing action: {str(e)}")
 

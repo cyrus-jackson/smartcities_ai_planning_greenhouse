@@ -120,6 +120,48 @@ def check_control_panel_password(password):
         if conn:
             conn.close()
 
+def get_all_configs():
+    conn = None
+    cur = None
+    try:
+        conn = psycopg2.connect(conn_str)
+        cur = conn.cursor()
+        select_query = "SELECT name, value FROM configs"
+        cur.execute(select_query)
+        return dict(cur.fetchall())
+    except Exception as e:
+        print(f"Error fetching configs: {e}")
+        return {}
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+def update_config(name, value):
+    conn = None
+    cur = None
+    try:
+        conn = psycopg2.connect(conn_str)
+        cur = conn.cursor()
+        update_query = """
+        INSERT INTO configs (name, value) 
+        VALUES (%s, %s)
+        ON CONFLICT (name) 
+        DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP
+        """
+        cur.execute(update_query, (name, value))
+        conn.commit()
+        return True
+    except Exception as e:
+        print(f"Error updating config: {e}")
+        return False
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+            
 def get_last_n_pddl_problems(n=5):
     conn = None
     cur = None
