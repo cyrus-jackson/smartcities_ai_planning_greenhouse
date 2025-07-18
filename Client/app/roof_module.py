@@ -1,46 +1,61 @@
+import RPi.GPIO as GPIO
+import time
 import state_constants as states
 from config import SERVO_1_GPIO, SERVO_2_GPIO
-from grovepi import *
 
 class RoofModule:
     def __init__(self, state_manager):
         self.state_manager = state_manager
         self.servo_1 = SERVO_1_GPIO
         self.servo_2 = SERVO_2_GPIO
-        # Initialize servos
-        try:
-            pinMode(self.servo_1, "OUTPUT")
-            pinMode(self.servo_2, "OUTPUT")
-            print("Roof servos initialized successfully")
-        except Exception as e:
-            print(f"Error initializing roof servos: {e}")
+
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(self.servo_1, GPIO.OUT)
+        GPIO.setup(self.servo_2, GPIO.OUT)
+
+        # 50Hz PWM for standard servos
+        self.pwm1 = GPIO.PWM(self.servo_1, 50)
+        self.pwm2 = GPIO.PWM(self.servo_2, 50)
+        self.pwm1.start(2.5)
+        self.pwm2.start(2.5)
+        print("Roof servos initialized successfully")
+
+    def set_angle(self, pwm, angle):
+        from numpy import interp
+        angle = max(0, min(180, angle))
+        duty = interp(angle, [0, 180], [2.5, 12.5])
+        pwm.ChangeDutyCycle(duty)
+        time.sleep(0.5)  # Allow servo to move
 
     def open_roof(self, servo_state):
-        """Open roof servo to 90 degrees"""
         try:
-            port = self.servo_1 if "s1" in servo_state else self.servo_2
-            servo_angle = 90  # or adjust as needed for your hardware
-            servo(port, servo_angle)
-            print(f"RoofModule: Opening roof servo {port} to {servo_angle} degrees")
+            if "s1" in servo_state:
+                self.set_angle(self.pwm1, 90)
+                print(f"RoofModule: Opening roof servo {self.servo_1} to 90 degrees")
+            else:
+                self.set_angle(self.pwm2, 90)
+                print(f"RoofModule: Opening roof servo {self.servo_2} to 90 degrees")
             self.state_manager.update_state(servo_state)
         except Exception as e:
             print(f"Error opening roof servo: {e}")
 
     def close_roof(self, servo_state):
-        """Close roof servo to 0 degrees"""
         try:
-            port = self.servo_1 if "s1" in servo_state else self.servo_2
-            servo_angle = 0
-            servo(port, servo_angle)
-            print(f"RoofModule: Closing roof servo {port} to {servo_angle} degrees")
+            if "s1" in servo_state:
+                self.set_angle(self.pwm1, 0)
+                print(f"RoofModule: Closing roof servo {self.servo_1} to 0 degrees")
+            else:
+                self.set_angle(self.pwm2, 0)
+                print(f"RoofModule: Closing roof servo {self.servo_2} to 0 degrees")
             self.state_manager.update_state(servo_state)
         except Exception as e:
             print(f"Error closing roof servo: {e}")
 
     def cleanup(self):
-        """Clean up resources"""
         try:
-            servo(self.servo_1, 0)
-            servo(self.servo_2, 0)
+            self.pwm1.stop()
+            self.pwm2.stop()
+            GPIO.cleanup()
         except Exception as e:
             print(f"Error during servo cleanup: {e}")

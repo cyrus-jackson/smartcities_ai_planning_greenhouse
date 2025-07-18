@@ -18,11 +18,9 @@ WATER_TANK_GPIO = 4
 # In Centimeters
 WATER_TANK_HEIGHT = 100
 
-
-# D3
-SERVO_1_GPIO = 3
-# D8
-SERVO_2_GPIO = 8
+# Roof GPIO. This is not a Groove Relay.
+SERVO_1_GPIO = 26
+SERVO_2_GPIO = 23
 
 
 DEFAULT_CONFIG = {

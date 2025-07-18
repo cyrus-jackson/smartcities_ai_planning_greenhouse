@@ -78,38 +78,52 @@ class RabbitMQClient:
 def invoke_action(action, client):
     print(f"Invoking action: {action}")
 
-    # First check if it's an informational message
-    if action in states.INFO_MESSAGES:
-        print(f"Info: {states.INFO_MESSAGES[action]}")
+    # Info/notification messages
+    act_base = action.split()[0]
+    if act_base in states.INFO_MESSAGES:
+        print(f"Info: {states.INFO_MESSAGES[act_base]}")
+        return
+    if act_base in states.NOTIFICATIONS:
+        print(f"Notification: {act_base.replace('_', ' ').capitalize()}")
         return
 
     try:
         if isinstance(action, str):
             tokens = action.split()
             act = tokens[0]
-            # Handle PDDL action names
-            if act == "turn_on_fan":
+
+            # Use state_constants for actuator actions
+            if act == states.FAN_ON:
                 client.fan.turn_on()
                 print("Action: Turning fan on")
-            elif act == "turn_off_fan":
+            elif act == states.FAN_OFF:
                 client.fan.turn_off()
                 print("Action: Turning fan off")
             elif act == "open_roof":
-                servo = tokens[-1]  # Use last token for servo
+                servo = tokens[-1]
                 client.roof.open_roof(f"servo_on {servo}")
                 print(f"Action: Opening roof servo {servo}")
             elif act == "close_roof":
                 servo = tokens[-1]
                 client.roof.close_roof(f"servo_on {servo}")
                 print(f"Action: Closing roof servo {servo}")
-            elif act == "turn_on_pump":
+            elif act == states.WATER_PUMP_ON:
                 client.water_pump.turn_on()
                 print("Action: Turning water pump on")
-            elif act == "turn_off_pump":
+            elif act == states.WATER_PUMP_OFF:
                 client.water_pump.turn_off()
                 print("Action: Turning water pump off")
-            elif act in states.INFO_MESSAGES:
-                print(f"Info: {states.INFO_MESSAGES[act]}")
+            # Handle predicate-style actions
+            elif act == "servo_on":
+                servo = tokens[1]
+                client.roof.open_roof(f"servo_on {servo}")
+                print(f"Action: Opening roof servo {servo} (predicate)")
+            elif act == "water_pump_on":
+                client.water_pump.turn_on()
+                print("Action: Turning water pump on (predicate)")
+            elif act == "fan_on":
+                client.fan.turn_on()
+                print("Action: Turning fan on (predicate)")
             else:
                 print(f"Unknown action: {action}")
     except Exception as e:
