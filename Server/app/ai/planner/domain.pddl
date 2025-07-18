@@ -6,17 +6,23 @@
   )
 
   (:predicates
+    ;; Actuator states
     (fan_on ?f - fan)
     (servo_on ?s - servo)
     (water_pump_on ?m - motor)
 
+    ;; Comfort state predicates
     (temperature_comfortable)
     (humidity_comfortable)
     (soil_moisture_adequate)
 
+    ;; Assessment markers
     (temperature_assessed)
     (humidity_assessed)
     (soil_assessed)
+
+    ;; Global completion marker
+    (all_conditions_assessed)
   )
 
   (:functions
@@ -27,21 +33,21 @@
     (humidity-reading ?hs - sensor)
     (humidity-threshold)
 
-    ;; Soil & water
+    ;; Soil and water
     (soil_moisture ?ss - sensor)
     (soil_moisture_threshold)
 
     (water_tank_level ?wl - sensor)
     (water_level_threshold)
 
-    ;; Cooling parameters
+    ;; Fan/servo parameters
     (cooling-rate ?f - fan)
     (required-duration ?f - fan)
 
     (servo-cooling-rate ?s - servo)
     (servo-duration ?s - servo)
 
-    ;; Cost metric
+    ;; Optimization cost
     (total-cost)
   )
 
@@ -71,8 +77,7 @@
       (fan_on ?f)
       (< (temperature-reading ?ts) (temperature-threshold))
       (< (humidity-reading ?hs) (humidity-threshold))
-      (temperature_assessed)
-      (humidity_assessed)
+      (all_conditions_assessed)
     )
     :effect (not (fan_on ?f))
   )
@@ -103,8 +108,7 @@
       (servo_on ?s)
       (< (temperature-reading ?ts) (temperature-threshold))
       (< (humidity-reading ?hs) (humidity-threshold))
-      (temperature_assessed)
-      (humidity_assessed)
+      (all_conditions_assessed)
     )
     :effect (and
       (not (servo_on ?s))
@@ -112,7 +116,7 @@
     )
   )
 
-  ;; === WATER PUMP ACTIONS ===
+  ;; === PUMP ACTIONS ===
   (:action turn_on_pump
     :parameters (?ss - sensor ?wl - sensor ?m - motor)
     :precondition (and 
@@ -131,16 +135,16 @@
     :parameters (?ss - sensor ?wl - sensor ?m - motor)
     :precondition (and 
       (water_pump_on ?m)
-      (soil_assessed)
       (or
         (< (water_tank_level ?wl) (water_level_threshold))
         (>= (soil_moisture ?ss) (soil_moisture_threshold))
       )
+      (all_conditions_assessed)
     )
     :effect (not (water_pump_on ?m))
   )
 
-  ;; === COMFORT ASSESSMENT ACTIONS ===
+  ;; === COMFORT ASSESSMENTS ===
   (:action assess_temperature_comfort
     :parameters (?ts - sensor)
     :precondition (and
@@ -177,4 +181,14 @@
     )
   )
 
+  ;; === FINALIZATION ===
+  (:action finalize_assessment
+    :parameters ()
+    :precondition (and
+      (temperature_assessed)
+      (humidity_assessed)
+      (soil_assessed)
+    )
+    :effect (all_conditions_assessed)
+  )
 )
