@@ -167,7 +167,7 @@ def get_init_state(client, plan_id):
     return init
 
 def get_data():
-    # return sample_data
+    return sample_data
     client = _InfluxSingleton.get_client()
     plan_id = get_latest_plan_id(client)
     if plan_id is None:
