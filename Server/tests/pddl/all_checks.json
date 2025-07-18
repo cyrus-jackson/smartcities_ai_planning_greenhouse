@@ -2,13 +2,13 @@
  "name": "independent_greenhouse_case",
  "fluents": {
   "temperature-threshold": 25,
-  "temperature-reading ts1": 8,
+  "temperature-reading ts1": 88,
   "humidity-threshold": 25,
-  "humidity-reading hs1": 175,
-  "cooling-rate fan1": 15,
-  "required-duration fan1": 12,
-  "servo-cooling-rate s1": 30,
-  "servo-duration s1": 10,
+  "humidity-reading hs1": 1032,
+  "cooling-rate fan1": 5,
+  "required-duration fan1": 190,
+  "servo-cooling-rate s1": 1,
+  "servo-duration s1": 100,
   "total-cost": 0
  },
  "init": [
