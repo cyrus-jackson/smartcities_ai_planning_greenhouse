@@ -3,6 +3,7 @@
   (:types
     actuator sensor - object
     fan servo motor - actuator
+    alert-level
   )
 
   (:predicates
@@ -20,6 +21,10 @@
     (temperature_assessed)
     (humidity_assessed)
     (soil_assessed)
+    (water_managed)
+
+    ;; Alerts
+    (alert_issued ?level - alert-level)
 
     ;; Global completion marker
     (all_conditions_assessed)
@@ -46,6 +51,13 @@
 
     (servo-cooling-rate ?s - servo)
     (servo-duration ?s - servo)
+
+    (hours_until_rain)
+
+    ;; Water alert thresholds (configurable)
+    (water_alert_high_threshold)
+    (water_alert_warning_threshold)
+    (rain_expected_threshold)
 
     ;; Optimization cost
     (total-cost)
@@ -144,6 +156,61 @@
     :effect (not (water_pump_on ?m))
   )
 
+  ;; ====================
+  ;; WATER MANAGEMENT ACTIONS
+  ;; ====================
+
+  (:action issue_high_alert
+    :parameters (?wl - sensor)
+    :precondition (and
+      (> (hours_until_rain) (rain_expected_threshold))
+      (<= (water_tank_level ?wl) (water_alert_high_threshold))
+    )
+    :effect (alert_issued high)
+  )
+
+  (:action issue_warning
+    :parameters (?wl - sensor)
+    :precondition (and
+      (> (hours_until_rain) (rain_expected_threshold))
+      (> (water_tank_level ?wl) (water_alert_high_threshold))
+      (<= (water_tank_level ?wl) (water_alert_warning_threshold))
+    )
+    :effect (alert_issued warning)
+  )
+
+  (:action issue_no_alert
+    :parameters (?wl - sensor)
+    :precondition (and
+      (> (water_tank_level ?wl) (water_alert_warning_threshold))
+    )
+    :effect (alert_issued none)
+  )
+
+  (:action expecting_rain_alert
+    :parameters (?wl - sensor)
+    :precondition (<= (hours_until_rain) (rain_expected_threshold))
+    :effect (alert_issued rain-expected)
+  )
+
+  (:action issue_low_water_alert
+    :parameters (?wl - sensor ?ss - sensor)
+    :precondition (and
+      (< (water_tank_level ?wl) (water_level_threshold))
+      (< (soil_moisture ?ss) (soil_moisture_threshold))
+    )
+    :effect (alert_issued low-water)
+  )
+
+  (:action confirm_water_managed
+    :parameters ()
+    :precondition (and
+      (not (water_managed))
+      (exists (?level - alert-level) (alert_issued ?level))
+    )
+    :effect (water_managed)
+  )
+
   ;; === COMFORT ASSESSMENTS ===
   (:action assess_temperature_comfort
     :parameters (?ts - sensor)
@@ -174,6 +241,20 @@
     :precondition (and
       (not (soil_moisture_adequate))
       (>= (soil_moisture ?ss) (soil_moisture_threshold))
+    )
+    :effect (and
+      (soil_moisture_adequate)
+      (soil_assessed)
+    )
+  )
+
+  (:action assess_soil_moisture_blocked
+    :parameters (?ss - sensor ?wl - sensor)
+    :precondition (and
+      (not (soil_moisture_adequate))
+      (< (soil_moisture ?ss) (soil_moisture_threshold))
+      (< (water_tank_level ?wl) (water_level_threshold))
+      (alert_issued low-water)
     )
     :effect (and
       (soil_moisture_adequate)

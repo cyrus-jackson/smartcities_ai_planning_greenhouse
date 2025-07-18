@@ -44,6 +44,9 @@ def create_tables():
         fetched_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         data JSONB NOT NULL
     );
+
+    
+    
     """
 
     try:

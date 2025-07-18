@@ -1,34 +1,40 @@
 {
-  "name": "greenhouse_correct_fan_servo_state",
-  "fluents": {
-    "temperature-threshold": 25,
-    "temperature-reading ts1": 131,
-    "humidity-threshold": 25,
-    "humidity-reading hs1": 21,
-    "soil_moisture ss": 30,
-    "soil_moisture_threshold":35,
-    "water_tank_level wl": 55,
-    "water_level_threshold": 20,
-    "cooling-rate fan1": 2,
-    "required-duration fan1": 100,
-    "servo-cooling-rate s1": 1,
-    "servo-duration s1": 100,
-    "total-cost": 0
-  },
-  "init": [
-    "not (fan_on fan1)",
-    "not (servo_on s1)"
-    ],
-  "goals": [
-    "(temperature_comfortable)",
-    "(humidity_comfortable)",
-    "(soil_moisture_adequate)"
-  ],
-  "objects": {
-    "sensor": ["ts1", "hs1", "ss", "wl"],
-    "fan": ["fan1"],
-    "servo": ["s1"],
-    "motor": ["mp1"]
-  },
-  "metric": "minimize"
+ "name": "greenhouse_correct_fan_servo_state",
+ "fluents": {
+   "temperature-threshold": 25,
+   "temperature-reading ts1": 20,
+   "humidity-threshold": 25,
+   "humidity-reading hs1": 21,
+   "soil_moisture ss": 30,
+   "soil_moisture_threshold": 35,
+   "cooling-rate fan1": 2,
+   "required-duration fan1": 100,
+   "servo-cooling-rate s1": 1,
+   "servo-duration s1": 100,
+   "total-cost": 0,
+   "water_tank_level wl": 10,
+   "water_level_threshold": 20,
+   "hours_until_rain": 10,
+   "water_alert_high_threshold": 10,
+   "water_alert_warning_threshold": 50,
+   "rain_expected_threshold": 30
+ },
+ "init": [
+   "not (fan_on fan1)",
+   "not (servo_on s1)"
+ ],
+ "goals": [
+   "(temperature_comfortable)",
+   "(humidity_comfortable)",
+   "(soil_moisture_adequate)",
+   "(water_managed)"
+ ],
+ "objects": {
+   "sensor": ["ts1", "hs1", "ss", "wl"],
+   "fan": ["fan1"],
+   "servo": ["s1"],
+   "motor": ["mp1"],
+   "alert-level": ["high", "warning", "none", "rain-expected"]
+ },
+ "metric": "minimize"
 }
