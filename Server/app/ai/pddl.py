@@ -1,6 +1,8 @@
 import requests
 import time
-import os
+import logging
+# Set up logging
+logging.basicConfig(level=logging.INFO)
 import re
 import json
 import redis
@@ -9,6 +11,7 @@ from .planner import pddl_transform as pt
 from app.db import sqldb as db
 import app.utils.state_constants as states
 from app.utils.state_constants import NOTIFICATIONS
+
 
 # Initialize Redis client here
 redis_client = redis.StrictRedis(host='localhost', port=6379, db=0, decode_responses=True)
@@ -60,55 +63,63 @@ def process_notification_actions(action, fluents):
             "message": message,
             "type": notif_type
         }
-    print(fluents)
+    logging.debug(f"Fluents: {fluents}")
     redis_client.set(states.WATER_TANK_LEVEL, fluents[states.WATER_TANK_LEVEL])
     return None
 
 def parse_enhsp_output(response_json, fluents):
+    logging.info("parse_enhsp_output")
     try:
         raw_output = response_json['result']['output']['plan']
-
+        logging.error(raw_output)
         if "Found Plan:" not in raw_output:
             return False
 
         plan_steps = re.findall(r'(\d+\.\d+):\s+\(([^)]+)\)', raw_output)
-        # plan_steps is now a list of tuples: [("0.0", "turn_off_fan"), ...]
-        # Mapping from PDDL actions to state_constants
-        action_map = {
-            "turn_on_fan": states.FAN_ON,
-            "turn_off_fan": states.FAN_OFF,
-            "open_roof s1": states.RUN_ROOF_SERVO_S1,
-            "open_roof s2": states.RUN_ROOF_SERVO_S2,
-            "close_roof s1": states.CLOSE_ROOF_SERVO_S1,
-            "close_roof s2": states.CLOSE_ROOF_SERVO_S2,
-        }
-
         parsed = {}
         notifications = []
+        logging.info(plan_steps)
         for step_num, action in plan_steps:
             action = action.strip()
-            mapped = action_map.get(action)
-            if mapped:
-                parsed[step_num] = mapped
+            tokens = action.split()
+            act = tokens[0]
+
+            # Map PDDL actions to state_constants
+            if act == "turn_on_fan":
+                parsed[step_num] = states.FAN_ON
+            elif act == "turn_off_fan":
+                parsed[step_num] = states.FAN_OFF
+            elif act == "open_roof":
+                servo = tokens[-1]
+                parsed[step_num] = f"servo_on {servo}"
+            elif act == "close_roof":
+                servo = tokens[-1]
+                parsed[step_num] = f"not (servo) {servo}"
+            elif act == "turn_on_pump":
+                parsed[step_num] = states.WATER_PUMP_ON
+            elif act == "turn_off_pump":
+                parsed[step_num] = states.WATER_PUMP_OFF
             else:
-                parsed[step_num] = action
+                parsed[step_num] = action  # keep as-is for info/assessment actions
+
             # Process notification actions
-            notif = process_notification_actions(action, fluents)
+            notif = process_notification_actions(act, fluents)
             if notif:
                 notifications.append(notif)
-        print("Notifications found:", notifications)
 
-        return parsed, notifications if parsed else False
+        logging.info(f"Notifications found: {notifications}")
+        return (parsed, notifications) if parsed else ({}, notifications)
 
-    except (KeyError, IndexError, TypeError):
-        return False
+    except (KeyError, IndexError, TypeError) as e:
+        logging.exception("Exception in parse_enhsp_output:")
+        return {}, []
 
 def insert_problem(data):
     req_body = {
         'domain': pt.get_domain_data(),
         'problem': pt.get_problem_file_with_data(unrendered_data=data)
     }
-    print(req_body['problem'])
+    # logging.info(req_body['problem'])
     problem_name = "problem_" + str(time.time())
     solve_request_url = requests.post(
         "https://solver.planning.domains:5001/package/enhsp/solve", json=req_body
