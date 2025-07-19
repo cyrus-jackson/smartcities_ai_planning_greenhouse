@@ -95,7 +95,6 @@ This indirect communication (decoupling) via RabbitMQ (and Redis for notificatio
 
 - Make sure Redis is running and accessible before starting the server.
 
----
 
 ---
 
