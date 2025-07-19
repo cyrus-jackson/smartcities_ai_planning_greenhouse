@@ -109,13 +109,16 @@ def invoke_action(action, client):
     try:
         if isinstance(action, str):
             tokens = action.split()
-            act = tokens[0]
+            if len(tokens) > 0:
+                act = tokens[0]
+            else:
+                act = None
 
             # Use state_constants for actuator actions
-            if act == states.FAN_ON:
+            if act == states.PLANNER_FAN_ON:
                 client.fan.turn_on()
                 print("Action: Turning fan on")
-            elif act == states.FAN_OFF:
+            elif act == states.PLANNER_FAN_OFF:
                 client.fan.turn_off()
                 print("Action: Turning fan off")
             elif act == "open_roof":
@@ -126,25 +129,12 @@ def invoke_action(action, client):
                 servo = tokens[-1]
                 client.roof.close_roof(f"servo_on {servo}")
                 print(f"Action: Closing roof servo {servo}")
-            elif act == states.WATER_PUMP_ON:
+            elif act == states.PLANNER_WATER_PUMP_ON:
                 client.water_pump.turn_on()
                 print("Action: Turning water pump on")
-            elif act == states.WATER_PUMP_OFF:
+            elif act == states.PLANNER_WATER_PUMP_OFF:
                 client.water_pump.turn_off()
                 print("Action: Turning water pump off")
-            # Handle predicate-style actions
-            elif act == "servo_on":
-                servo = tokens[1]
-                client.roof.open_roof(f"servo_on {servo}")
-                print(f"Action: Opening roof servo {servo} (predicate)")
-            elif act == "water_pump_on":
-                client.water_pump.turn_on()
-                print("Action: Turning water pump on (predicate)")
-            elif act == "fan_on":
-                client.fan.turn_on()
-                print("Action: Turning fan on (predicate)")
-            else:
-                print(f"Unknown action: {action}")
     except Exception as e:
         print(f"Error executing action: {str(e)}")
 

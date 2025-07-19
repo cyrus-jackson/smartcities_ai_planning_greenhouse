@@ -1,14 +1,24 @@
 PLAN_ID = "PLAN_ID"
 
-# Actuator states (predicates)
-FAN_ON = "turn_on_fan"
-FAN_OFF = "turn_off_fan"
-RUN_ROOF_SERVO_S1 = "open_roof s1"
-RUN_ROOF_SERVO_S2 = "open_roof s2"
-CLOSE_ROOF_SERVO_S1 = "close_roof s1"
-CLOSE_ROOF_SERVO_S2 = "close_roof s2"
-WATER_PUMP_ON = "turn_on_pump"
-WATER_PUMP_OFF = "turn_off_pump"
+# Planner states
+PLANNER_FAN_ON = "turn_on_fan"
+PLANNER_FAN_OFF = "turn_off_fan"
+PLANNER_RUN_ROOF_SERVO_S1 = "open_roof s1"
+PLANNER_RUN_ROOF_SERVO_S2 = "open_roof s2"
+PLANNER_CLOSE_ROOF_SERVO_S1 = "close_roof s1"
+PLANNER_CLOSE_ROOF_SERVO_S2 = "close_roof s2"
+PLANNER_WATER_PUMP_ON = "turn_on_pump"
+PLANNER_WATER_PUMP_OFF = "turn_off_pump"
+
+# Planner states (predicates)
+FAN_ON = "fan_on fan1 "
+FAN_OFF = "not (fan_on fan1)"
+RUN_ROOF_SERVO_S1 = "servo_on s1"
+RUN_ROOF_SERVO_S2 = "not (servo_on s1)"
+CLOSE_ROOF_SERVO_S1 = "not (servo_on s1)"
+CLOSE_ROOF_SERVO_S2 = "not (servo_on s2)"
+WATER_PUMP_ON = "water_pump_on mp1"
+WATER_PUMP_OFF = "not (water_pump_on mp1)"
 
 # Fluent names (match PDDL and JSON)
 TEMPERATURE_READING = "temperature-reading ts1"

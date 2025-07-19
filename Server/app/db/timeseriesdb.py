@@ -6,6 +6,9 @@ import os
 import certifi
 from influxdb_client_3 import InfluxDBClient3, Point, flight_client_options
 from app.db.sqldb import get_all_configs
+import logging
+
+logger = logging.getLogger(__name__)
 
 token = os.environ.get("INFLUXDB_TOKEN").strip()
 org = os.environ.get("INFLUXDB_ORG").strip()
@@ -96,12 +99,13 @@ def get_avg_tank_level_mean():
     
     df = result.to_pandas()
     col_name = f'avg(greenhouse_sensors.{states.WATER_TANK_LEVEL})'
-    print(df[col_name].iloc[0])
+    logger.debug(f"Average tank level: {df[col_name].iloc[0]}")
     return df[col_name].iloc[0]
 
 def get_sensor_means(client, plan_id):
     fluents = {}
-    for fluent in [states.TEMPERATURE_READING, states.HUMIDITY_READING, states.WATER_TANK_LEVEL]:
+    for fluent in [states.TEMPERATURE_READING, states.HUMIDITY_READING, 
+                   states.WATER_TANK_LEVEL, states.SOIL_MOISTURE_READING]:
         query = f'''
             SELECT AVG("{fluent}") FROM "greenhouse_sensors"
             WHERE "{states.PLAN_ID}" = '{plan_id}'
@@ -194,7 +198,7 @@ def get_data():
         },
         "metric": "minimize"
     }
-    print(data)
+    logger.info(f"Generated data for planner: {data}")
     return data
 
 def insert_hours_until_rain(data):
@@ -208,16 +212,16 @@ def insert_hours_until_rain(data):
                 hours_until_rain = idx  # hours from now
                 break
         if hours_until_rain is None:
-            print(f"No rain expected in the forecast period (precipitation_probability > {required_prob}% not found). Setting it to default 100")
+            logger.info(f"No rain expected in the forecast period (precipitation_probability > {required_prob}% not found). Setting it to default 100")
             hours_until_rain = 100
         point = (
             Point("weather")
             .field("hours_until_rain", hours_until_rain)
         )
         client.write(database=database, record=point)
-        print(f"Inserted hours_until_rain={hours_until_rain} into timeseriesdb.")
+        logger.info(f"Inserted hours_until_rain={hours_until_rain} into timeseriesdb.")
     except Exception as e:
-        print(f"Error inserting hours_until_rain into timeseriesdb: {e}")
+        logger.error(f"Error inserting hours_until_rain into timeseriesdb: {e}")
 
 
 def write_sensor_data(message_list):
@@ -234,11 +238,11 @@ def write_sensor_data(message_list):
         # if message.get("plan_id") is not None:
         point = point.tag(states.PLAN_ID, message[states.PLAN_ID])
         points.append(point)
-    print(f"Writing to tdb: {points}")
+    logger.debug(f"Writing to tdb: {points}")
     client.write(database=database, record=points)
 
 def write_state_data(message):
-    print(f"The state message is: {message}")
+    logger.debug(f"The state message is: {message}")
     client = _InfluxSingleton.get_client()
     point = Point("greenhouse_state")
     for key, value in message.items():
@@ -266,10 +270,10 @@ def get_sensor_timeseries_data(interval="1h"):
         WHERE time >= '{start.isoformat()}'
         ORDER BY time ASC
     '''
-    print(query)
+    logger.debug(query)
     result = client.query(query, database=database)
     df = result.to_pandas()
-    print(df)
+    logger.debug(df)
 
     # If PLAN_ID is a tag, it may appear as a column or as an index level
     plan_id_col = states.PLAN_ID

@@ -6,7 +6,7 @@ import time
 import json
 import redis
 import requests
-import datetime
+import logging
 
 from app.utils.config import load_config
 from app.utils.rabbitmq_helper import RabbitMQHelper
@@ -52,15 +52,15 @@ class QueueConsumerThread(threading.Thread):
                     self.process_func(msg)
 
             channel.basic_consume(queue=self.queue_name, on_message_callback=on_message, auto_ack=True)
-            print(f"RabbitMQ consumer started on queue: {self.queue_name}")
+            logging.info(f"RabbitMQ consumer started on queue: {self.queue_name}")
 
             try:
                 while not self.stop_event.is_set():
                     channel.connection.process_data_events(time_limit=1)
             except Exception as e:
-                print(f"QueueConsumerThread ({self.queue_name}) encountered an error: {e}")
+                logging.error(f"QueueConsumerThread ({self.queue_name}) encountered an error: {e}")
             finally:
-                print(f"QueueConsumerThread ({self.queue_name}) cleaning up...")
+                logging.error(f"QueueConsumerThread ({self.queue_name}) cleaning up...")
 
 # Thread management
 consumer_threads = {}
@@ -80,22 +80,22 @@ def stop_consumer(queue_name):
         stop_event.set()
     if thread:
         thread.join(timeout=10)
-        print(f"{queue_name} consumer thread stopped.")
+        logging.info(f"{queue_name} consumer thread stopped.")
 
 # Processing functions
 def process_sensor_batch(batch):
-    print(f"Processing sensor batch: {batch}")
+    logging.info(f"Processing sensor batch: {batch}")
     dict_batch = [json.loads(msg) for msg in batch]
     tdb.write_sensor_data(dict_batch)
 
 def process_state_message(msg):
-    print(f"Processing state message: {msg}")
+    logging.info(f"Processing state message: {msg}")
     try:
         state_dict = json.loads(msg)
         tdb.write_state_data(state_dict)
         redis_client.set(CURRENT_STATES, msg)
     except Exception as e:
-        print(f"Error processing state message: {e}")
+        logging.error(f"Error processing state message: {e}")
 
 # Start/stop helpers for each queue
 def start_rabbitmq_batch_consumer():
@@ -124,11 +124,11 @@ def long_running_task(x, y):
     try:
         have_lock = redis_client.set(lock_id, "true", nx=True, ex=LOCK_EXPIRE)
         if not have_lock:
-            print("Task is already running. Skipping this run.")
+            logging.info("Task is already running. Skipping this run.")
             return None
         data = tdb.get_data()
         plan_id, parsed_plan, notifications = planner.insert_problem(data)
-        print("Inserted Plan: " + str(plan_id))
+        logging.info("Inserted Plan: " + str(plan_id))
 
         # Store notifications in Redis
         if notifications:
@@ -140,7 +140,7 @@ def long_running_task(x, y):
         planner_queue = rabbitmq.get("planner_queue", "planner_queue")
         with RabbitMQHelper() as helper:
             helper.send_message(planner_queue, json.dumps(parsed_plan))
-            print(f"Sent plan dict to queue {planner_queue}: {parsed_plan}")
+            logging.info(f"Sent plan dict to queue {planner_queue}: {parsed_plan}")
 
         return x + y
     finally:
@@ -155,9 +155,9 @@ def fetch_weather_forecast():
         data = response.json()
         insert_weather_forecast(data)
         tdb.insert_hours_until_rain(data)
-        print("Inserted Weather Data Successfully")
+        logging.info("Inserted Weather Data Successfully")
     except Exception as e:
-        print(f"Failed to fetch weather forecast: {e}")
+        logging.error(f"Failed to fetch weather forecast: {e}")
 
 def reset_notifications():
      redis_client.delete(NOTIFICATIONS_KEY)

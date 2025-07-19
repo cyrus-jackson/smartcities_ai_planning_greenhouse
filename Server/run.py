@@ -5,8 +5,19 @@ from app.tasks import *
 from apscheduler.schedulers.background import BackgroundScheduler
 import signal
 import sys
+import logging
 
 if __name__ == '__main__':
+    # --- Logging Configuration ---
+    # Configure root logger to show INFO level messages
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
+    # Set Pika logger to WARNING to reduce noise from connection heartbeats, etc.
+    logging.getLogger("pika").setLevel(logging.WARNING)
+    # --- End Logging Configuration ---
 
     # Start the batch consumer as a managed thread
     start_rabbitmq_batch_consumer()
@@ -22,7 +33,7 @@ if __name__ == '__main__':
     scheduler.start()
 
     def cleanup(signum=None, frame=None):
-        print("Shutting down server and cleaning up threads...")
+        logging.info("Shutting down server and cleaning up threads...")
         stop_rabbitmq_batch_consumer()
         stop_rabbitmq_state_consumer()
         scheduler.shutdown()
