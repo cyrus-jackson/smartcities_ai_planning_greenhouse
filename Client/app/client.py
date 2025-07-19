@@ -73,7 +73,11 @@ class RabbitMQClient:
         # Clean shutdown of modules
         self.fan.cleanup()
         self.water_pump.cleanup()
-        self.connection.close()
+        try:
+            if self.connection and self.connection.is_open:
+                self.connection.close()
+        except Exception as e:
+            print(f"Error closing RabbitMQ connection: {e}")
 
 def invoke_action(action, client):
     print(f"Invoking action: {action}")
