@@ -26,7 +26,8 @@ class RoofModule:
         angle = max(0, min(180, angle))
         duty = interp(angle, [0, 180], [2.5, 12.5])
         pwm.ChangeDutyCycle(duty)
-        time.sleep(0.5)  # Allow servo to move
+        time.sleep(0.8)  # Allow servo to move
+        pwm.ChangeDutyCycle(0)  # Stop sending PWM to prevent jitter
 
     def open_roof(self, servo_state):
         try:
