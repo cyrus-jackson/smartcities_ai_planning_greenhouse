@@ -67,7 +67,7 @@
   (:action turn_on_fan
     :parameters (?ts - sensor ?hs - sensor ?f - fan)
     :precondition (and
-      (not (fan_on ?f))
+      ; (not (fan_on ?f))
       (or
         (>= (temperature-reading ?ts) (temperature-threshold))
         (>= (humidity-reading ?hs) (humidity-threshold))
@@ -98,7 +98,7 @@
   (:action open_roof
     :parameters (?ts - sensor ?hs - sensor ?s - servo)
     :precondition (and
-      (not (servo_on ?s))
+      ; (not (servo_on ?s))
       (or
         (>= (temperature-reading ?ts) (temperature-threshold))
         (>= (humidity-reading ?hs) (humidity-threshold))
@@ -132,7 +132,7 @@
   (:action turn_on_pump
     :parameters (?ss - sensor ?wl - sensor ?m - motor)
     :precondition (and 
-      (not (water_pump_on ?m))
+      ; (not (water_pump_on ?m))
       (>= (water_tank_level ?wl) (water_level_threshold))
       (< (soil_moisture ?ss) (soil_moisture_threshold))
     )
@@ -269,6 +269,7 @@
       (temperature_assessed)
       (humidity_assessed)
       (soil_assessed)
+      (water_managed)
     )
     :effect (all_conditions_assessed)
   )

@@ -11,7 +11,7 @@ SOIL_MOISTURE_GPIO = 1
 FAN_GPIO = 2
 
 # Water Pump Relay GPIO. This is not a Groove Relay. 
-WATER_PUMP_GPIO = 18
+WATER_PUMP_GPIO = 27
 
 # D4
 WATER_TANK_GPIO = 4

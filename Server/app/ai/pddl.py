@@ -73,7 +73,8 @@ def parse_enhsp_output(response_json, fluents):
         raw_output = response_json['result']['output']['plan']
         logging.error(raw_output)
         if "Found Plan:" not in raw_output:
-            return False
+            logging.warning("No plan is found for the current state.")
+            return ({}, [{"message": "No plan is found for the current state.", "type": "warning"}])
 
         plan_steps = re.findall(r'(\d+\.\d+):\s+\(([^)]+)\)', raw_output)
         parsed = {}
@@ -96,7 +97,7 @@ def parse_enhsp_output(response_json, fluents):
 
     except (KeyError, IndexError, TypeError) as e:
         logging.exception("Exception in parse_enhsp_output:")
-        return {}, []
+        return {}, [{"message": "No plan is found for the current state due to an error.", "type": "error"}]
 
 def insert_problem(data):
     req_body = {

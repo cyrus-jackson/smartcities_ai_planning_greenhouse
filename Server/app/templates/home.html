@@ -165,6 +165,41 @@
             flex-direction: column;
             justify-content: center;
         }
+        .configs-card {
+            min-height: 340px;
+            height: 340px;
+            border: 1px solid #e3e8ef;
+            border-radius: 1.2rem;
+            background: #f8fafc;
+            box-shadow: 0 1px 3px #e3e8ef;
+            overflow: hidden;
+        }
+        #configsList {
+            width: 100%;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+        .config-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            border-radius: 1.2rem;
+            padding: 0.3em 0.8em;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 0.25em;
+            border: 1px solid #e3e8ef;
+            box-shadow: 0 1px 3px #e3e8ef;
+            transition: background 0.2s, box-shadow 0.2s;
+            gap: 0.5em;
+        }
+        .config-icon {
+            font-size: 1.2rem;
+            margin-right: 0.4em;
+            color: #212529;
+        }
     </style>
 </head>
 <body>
@@ -282,8 +317,16 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div class="row g-4 align-items-stretch mb-4">
+        <div class="col-md-4">
+            <div id="configsCard" class="card shadow-sm configs-card h-100">
+                <div class="card-header bg-secondary text-white card-title">
+                    Configs
+                </div>
+                <div class="card-body bg-light w-100 d-flex flex-column align-items-center overflow-auto" style="max-height: 290px;">
+                    <ul id="configsList" class="list-group list-group-flush w-100"></ul>
+                </div>
+            </div>
+        </div>
         <div class="col-md-4">
             <div id="waterLevelCard" class="card shadow-sm text-center water-card h-100">
                 <div class="water-fill" id="waterCardFill"></div>
@@ -297,7 +340,6 @@
                 <div class="rain-title">Hours Until Rain</div>
             </div>
         </div>
-        
     </div>
     
     <!-- Toast container -->
@@ -373,7 +415,11 @@
         if(globalCurrentStates == null || globalCurrentStates != data.currentStates) {
             globalCurrentStates = data.currentStates;
             updateStateCard(await fetchCurrentStates());
-            
+        }
+        // Update configs card
+        if(typeof window.globalConfigs === 'undefined' || JSON.stringify(window.globalConfigs) !== JSON.stringify(data.configs)) {
+            window.globalConfigs = data.configs;
+            updateConfigsCard(window.globalConfigs);
         }
         // Update Rain Hours
         if(globalRainHours == null || globalRainHours != data.rainTime) {
@@ -612,16 +658,16 @@
             }];
         }
 
-        const iconMap = {
-            'fan_on': { label: 'Fan On', icon: '🌀' },
-            'fan_off': { label: 'Fan Off', icon: '🛑' },
-            'alert-warning': { label: 'Warning', icon: '⚠️' },
-            'alert-high': { label: 'High Alert', icon: '🚨' },
-            'no_alert': { label: 'No Alert', icon: '✅' },
-            'expecting_rain': { label: 'Expecting Rain', icon: '🌧️' },
-            'run_servo': { label: 'Roof Open', icon: '🔓' },
-            'close_servo': { label: 'Roof Closed', icon: '🔒' },
-            'outside_environment_safe': { label: 'Safe Outside', icon: '🌱' }
+        // Mapping from state_constants.py
+        const stateMap = {
+            'fan_on fan1 ': { label: 'Fan On', icon: '🌀' },
+            'not (fan_on fan1)': { label: 'Fan Off', icon: '🛑' },
+            'servo_on s1': { label: 'Roof S1 Open', icon: '🔓' },
+            'servo_on s2': { label: 'Roof S2 Open', icon: '🔓' },
+            'not (servo_on s1)': { label: 'Roof S1 Closed', icon: '🔒' },
+            'not (servo_on s2)': { label: 'Roof S2 Closed', icon: '🔒' },
+            'water_pump_on mp1': { label: 'Water Pump On', icon: '💧' },
+            'not (water_pump_on mp1)': { label: 'Water Pump Off', icon: '🚫💧' },
         };
 
         const allStates = [];
@@ -635,34 +681,21 @@
             });
         }
 
-        // Add config values
-        if (globalCurrentStates.configs) {
-            for (const [key, value] of Object.entries(globalCurrentStates.configs)) {
-                allStates.push({
-                    key: key,
-                    label: `${key.replace(/_/g, ' ')}: ${value}`,
-                    icon: '⚙️'
-                });
-            }
-        }
-
-        // Add active state entries (as before)
+        // Add active state entries (show only those with value 1)
         for (const [key, value] of Object.entries(globalCurrentStates)) {
-            if (key === 'PLAN_ID' || key === 'configs' || value !== 1) continue;
-
-            const parts = key.split(' ');
-            const baseKey = parts[0];
-            const instance = parts[1];
-
-            if (iconMap[baseKey]) {
-                const label = instance
-                    ? `${iconMap[baseKey].label} (${instance})`
-                    : iconMap[baseKey].label;
-
+            if (key === 'PLAN_ID' || value !== 1) continue;
+            if (stateMap[key]) {
                 allStates.push({
                     key,
-                    label,
-                    icon: iconMap[baseKey].icon
+                    label: stateMap[key].label,
+                    icon: stateMap[key].icon
+                });
+            } else {
+                // Fallback for unknown states
+                allStates.push({
+                    key,
+                    label: key,
+                    icon: '❔'
                 });
             }
         }
@@ -691,6 +724,24 @@
                         ${state.label}
                     </span>
                     <span style="width:12px;height:12px;display:inline-block;border-radius:50%;background:${dotColor};"></span>
+                </li>
+            `;
+        });
+    }
+
+    // Configs card rendering
+    function updateConfigsCard(configs) {
+        const configsList = document.getElementById('configsList');
+        configsList.innerHTML = '';
+        if (!configs || Object.keys(configs).length === 0) {
+            configsList.innerHTML = '<li class="list-group-item text-muted bg-transparent border-0">No configs</li>';
+            return;
+        }
+        Object.entries(configs).forEach(([key, value]) => {
+            configsList.innerHTML += `
+                <li class="config-list-item list-group-item bg-transparent">
+                    <span><span class="config-icon">⚙️</span> <span class="fw-semibold">${key.replace(/_/g, ' ')}</span></span>
+                    <span class="text-primary">${value}</span>
                 </li>
             `;
         });

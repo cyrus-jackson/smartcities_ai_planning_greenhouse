@@ -2,17 +2,17 @@
  "name": "greenhouse_correct_fan_servo_state",
  "fluents": {
    "temperature-threshold": 25,
-   "temperature-reading ts1": 20,
+   "temperature-reading ts1": 29,
    "humidity-threshold": 25,
-   "humidity-reading hs1": 21,
-   "soil_moisture ss": 30,
+   "humidity-reading hs1": 29,
+   "soil_moisture ss": 3,
    "soil_moisture_threshold": 35,
    "cooling-rate fan1": 2,
    "required-duration fan1": 100,
    "servo-cooling-rate s1": 1,
    "servo-duration s1": 100,
    "total-cost": 0,
-   "water_tank_level wl": 10,
+   "water_tank_level wl": 3,
    "water_level_threshold": 20,
    "hours_until_rain": 10,
    "water_alert_high_threshold": 10,
@@ -20,6 +20,8 @@
    "rain_expected_threshold": 30
  },
  "init": [
+  "servo_on s1",
+  "water_pump_on mp1"
  ],
  "goals": [
    "(temperature_comfortable)",

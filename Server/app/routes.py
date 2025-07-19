@@ -40,10 +40,18 @@ def plans_view():
 @app.route('/data', methods=['GET'])
 def get_data():
     interval = request.args.get("interval", "1h")  # "15m", "30m", or "1h"
-    data = get_sensor_timeseries_data(interval)
-    data['weather'] = get_recent_weather_forecast()
-    data["notifications"] = [{"message": "Fan turned on", "type": "success"}]
-    return jsonify(data)
+    raw_data = get_sensor_timeseries_data(interval)
+    # Map backend keys
+    mapped_data = {
+        "temperature": raw_data.get("temperature-reading ts1", []),
+        "humidity": raw_data.get("humidity-reading hs1", []),
+        "soil_moisture": raw_data.get("soil_moisture ss", []),
+        "water_tank_level": raw_data.get("water_tank_level wl", []),
+        "PLAN_ID": raw_data.get("PLAN_ID", []),
+    }
+    mapped_data['weather'] = get_recent_weather_forecast()
+    mapped_data["notifications"] = [{"message": "Fan turned on", "type": "success"}]
+    return jsonify(mapped_data)
 
 @app.route('/notifications', methods=['GET'])
 def get_notifications():
@@ -68,33 +76,24 @@ def control_panel():
                 config = load_config()
                 planner_queue = config["rabbitmq"].get("planner_queue", "planner_queue")
                 
-                # Map UI actions to state constants
-                action_mapping = {
-                    'Fan On': states.FAN_ON,
-                    'Fan Off': states.FAN_OFF,
-                }
-                
-                action = action_mapping.get(action, action)  # Use mapped action or original if not in mapping
-                
-                action_data = {
-                    "action": action
-                }
-                
-                
-                if action.startswith("Humidity"):
+                # Special handling for humidity
+                if action.lower().startswith("humidity"):
                     try:
                         humidity = int(action.split()[-1])
                         if 0 <= humidity <= 100:
-                            action_data["humidity"] = humidity
+                            action_str = f"humidity {humidity}"
                         else:
                             raise ValueError("Humidity must be between 0 and 100")
                     except ValueError as e:
                         message = f"Invalid humidity value: {str(e)}"
                         return render_template('control_panel.html', message=message)
+                else:
+                    action_str = action
                 
-                # Send to planner queue
+                # Send as dict with PLAN_ID and action key for client compatibility
+                msg = {"PLAN_ID": 0, "action": action_str}
                 with RabbitMQHelper() as helper:
-                    helper.send_message(planner_queue, json.dumps(action_data))
+                    helper.send_message(planner_queue, json.dumps(msg))
                 
                 message = f"Action '{action}' executed successfully!"
             else:

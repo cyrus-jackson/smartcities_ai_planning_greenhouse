@@ -36,7 +36,7 @@
         <div id="actionCards" class="row g-4 justify-content-center">
             <!-- Fan Controls -->
             <div class="col-md-3">
-                <div class="card action-card text-center border-success" onclick="submitAction('fan_on')">
+                <div class="card action-card text-center border-success" onclick="submitAction('turn_on_fan')">
                     <div class="card-body">
                         <div class="action-icon text-success">🌀</div>
                         <div class="fw-bold">Fan On</div>
@@ -44,17 +44,16 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card action-card text-center border-danger" onclick="submitAction('fan_off')">
+                <div class="card action-card text-center border-danger" onclick="submitAction('turn_off_fan')">
                     <div class="card-body">
                         <div class="action-icon text-danger">🛑</div>
                         <div class="fw-bold">Fan Off</div>
                     </div>
                 </div>
             </div>
-            
             <!-- Roof Servo S1 Controls -->
             <div class="col-md-3">
-                <div class="card action-card text-center border-primary" onclick="submitAction('run_servo s1')">
+                <div class="card action-card text-center border-primary" onclick="submitAction('open_roof s1')">
                     <div class="card-body">
                         <div class="action-icon text-primary">🔓</div>
                         <div class="fw-bold">Roof S1 Open</div>
@@ -62,17 +61,16 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card action-card text-center border-secondary" onclick="submitAction('close_servo s1')">
+                <div class="card action-card text-center border-secondary" onclick="submitAction('close_roof s1')">
                     <div class="card-body">
                         <div class="action-icon text-secondary">🔒</div>
                         <div class="fw-bold">Roof S1 Close</div>
                     </div>
                 </div>
             </div>
-
             <!-- Roof Servo S2 Controls -->
             <div class="col-md-3">
-                <div class="card action-card text-center border-primary" onclick="submitAction('run_servo s2')">
+                <div class="card action-card text-center border-primary" onclick="submitAction('open_roof s2')">
                     <div class="card-body">
                         <div class="action-icon text-primary">🔓</div>
                         <div class="fw-bold">Roof S2 Open</div>
@@ -80,18 +78,34 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card action-card text-center border-secondary" onclick="submitAction('close_servo s2')">
+                <div class="card action-card text-center border-secondary" onclick="submitAction('close_roof s2')">
                     <div class="card-body">
                         <div class="action-icon text-secondary">🔒</div>
                         <div class="fw-bold">Roof S2 Close</div>
                     </div>
                 </div>
             </div>
-
-            <!-- Humidity Control -->
-            <div class="col-md-4">
-                <div class="card action-card text-center border-info">
+            <!-- Water Pump Controls -->
+            <div class="col-md-3">
+                <div class="card action-card text-center border-info" onclick="submitAction('turn_on_pump')">
                     <div class="card-body">
+                        <div class="action-icon text-info">💧</div>
+                        <div class="fw-bold">Water Pump On</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card action-card text-center border-dark" onclick="submitAction('turn_off_pump')">
+                    <div class="card-body">
+                        <div class="action-icon text-dark">🚫💧</div>
+                        <div class="fw-bold">Water Pump Off</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Humidity Control -->
+            <div class="col-md-3">
+                <div class="card action-card text-center border-info h-100 d-flex flex-column justify-content-center align-items-center">
+                    <div class="card-body w-100">
                         <div class="action-icon text-info">💧</div>
                         <div class="fw-bold">Set Humidity</div>
                         <div class="mt-2">
@@ -102,8 +116,8 @@
                                    max="100" 
                                    step="1" 
                                    placeholder="Enter humidity %">
-                            <button class="btn btn-info mt-2" 
-                                    onclick="submitHumidity()">
+                            <button class="btn btn-info mt-2 w-100" 
+                                    onclick="submitHumidity(); return false;">
                                 Set
                             </button>
                         </div>
@@ -126,7 +140,7 @@
     function submitHumidity() {
         const humidity = document.getElementById('humidityValue').value;
         if (humidity >= 0 && humidity <= 100) {
-            document.getElementById('actionInput').value = `Humidity ${humidity}`;
+            document.getElementById('actionInput').value = `humidity ${humidity}`;
             document.querySelector('form').submit();
         } else {
             alert('Please enter a valid humidity value between 0 and 100');
