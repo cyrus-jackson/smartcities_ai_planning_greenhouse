@@ -25,10 +25,10 @@ if __name__ == '__main__':
 
     # Schedule long_running_task to run every 20 seconds
     scheduler = BackgroundScheduler()
-    scheduler.add_job(long_running_task, 'interval', seconds=20, args=[5, 7])
+    scheduler.add_job(long_running_task, 'interval', seconds=120, args=[5, 7])
 
     # Schedule weather fetch every hour
-    scheduler.add_job(fetch_weather_forecast, 'interval', seconds=20)
+    scheduler.add_job(fetch_weather_forecast, 'interval', minutes=5)
     
     scheduler.start()
 

@@ -138,7 +138,7 @@ def get_all_configs():
         if conn:
             conn.close()
 
-def update_config(name, value):
+def update_config_in_db(name, value):
     conn = None
     cur = None
     try:

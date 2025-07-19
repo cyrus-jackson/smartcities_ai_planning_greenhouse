@@ -14,137 +14,58 @@
 </head>
 <body>
 {% include "_navbar.html" %}
+
 <div class="container py-4">
     <h2 class="mb-4 text-center fw-bold text-success">Greenhouse Configuration</h2>
-    
+    <div class="row mb-4 justify-content-center">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                <input type="password" class="form-control" id="configPassword" placeholder="Enter password to update configs" required>
+            </div>
+        </div>
+    </div>
     <div class="row g-4">
-        <!-- Temperature Configuration -->
+        {% for key, value in configs.items() %}
         <div class="col-md-4">
             <div class="card config-card">
                 <div class="card-body">
-                    <h5 class="card-title">Temperature</h5>
+                    <h5 class="card-title">{{ key.replace('_', ' ').replace('-', ' ').title() }}</h5>
                     <div class="mb-3">
-                        <label class="form-label">Threshold (°C)</label>
+                        <label class="form-label">Value</label>
                         <div class="input-group">
-                            <input type="number" class="form-control" 
-                                   id="temperature-threshold"
-                                   value="{{ configs.get('temperature-threshold', 25) }}"
-                                   step="0.1">
-                            <button class="btn btn-success" 
-                                    onclick="updateConfig('temperature-threshold')">
-                                Save
-                            </button>
+                            <input type="number" class="form-control" id="{{ key }}" value="{{ value }}" step="any">
+                            <button class="btn btn-success" onclick="updateConfig('{{ key }}')">Save</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- Humidity Configuration -->
-        <div class="col-md-4">
-            <div class="card config-card">
-                <div class="card-body">
-                    <h5 class="card-title">Humidity</h5>
-                    <div class="mb-3">
-                        <label class="form-label">Threshold (%)</label>
-                        <div class="input-group">
-                            <input type="number" class="form-control" 
-                                   id="humidity-threshold"
-                                   value="{{ configs.get('humidity-threshold', 25) }}"
-                                   step="1">
-                            <button class="btn btn-success" 
-                                    onclick="updateConfig('humidity-threshold')">
-                                Save
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Soil Moisture Configuration -->
-        <div class="col-md-4">
-            <div class="card config-card">
-                <div class="card-body">
-                    <h5 class="card-title">Soil Moisture</h5>
-                    <div class="mb-3">
-                        <label class="form-label">Threshold (%)</label>
-                        <div class="input-group">
-                            <input type="number" class="form-control" 
-                                   id="soil_moisture_threshold"
-                                   value="{{ configs.get('soil_moisture_threshold', 35) }}"
-                                   step="1">
-                            <button class="btn btn-success" 
-                                    onclick="updateConfig('soil_moisture_threshold')">
-                                Save
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Water Level Configuration -->
-        <div class="col-md-4">
-            <div class="card config-card">
-                <div class="card-body">
-                    <h5 class="card-title">Water Level</h5>
-                    <div class="mb-3">
-                        <label class="form-label">Threshold (cm)</label>
-                        <div class="input-group">
-                            <input type="number" class="form-control" 
-                                   id="water_level_threshold"
-                                   value="{{ configs.get('water_level_threshold', 20) }}"
-                                   step="1">
-                            <button class="btn btn-success" 
-                                    onclick="updateConfig('water_level_threshold')">
-                                Save
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- Water Level Configuration -->
-        <div class="col-md-4">
-            <div class="card config-card">
-                <div class="card-body">
-                    <h5 class="card-title">Water Level</h5>
-                    <div class="mb-3">
-                        <label class="form-label">Threshold (cm)</label>
-                        <div class="input-group">
-                            <input type="number" class="form-control" 
-                                   id="water_level_threshold"
-                                   value="{{ configs.get('water_level_threshold', 20) }}"
-                                   step="1">
-                            <button class="btn btn-success" 
-                                    onclick="updateConfig('water_level_threshold')">
-                                Save
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 </div>
 
 <script>
 async function updateConfig(name) {
     const value = document.getElementById(name).value;
+    const password = document.getElementById('configPassword').value;
+    if (!password) {
+        alert('Please enter the password to update configs.');
+        return;
+    }
     try {
         const response = await fetch('/update_config', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ name, value })
+            body: JSON.stringify({ name, value, password })
         });
-        
-        if (response.ok) {
+        const data = await response.json();
+        if (response.ok && data.status === 'success') {
             alert('Configuration updated successfully!');
         } else {
-            alert('Error updating configuration');
+            alert(data.message || 'Error updating configuration');
         }
     } catch (error) {
         alert('Error: ' + error.message);

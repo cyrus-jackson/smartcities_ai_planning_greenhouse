@@ -99,8 +99,11 @@ def get_avg_tank_level_mean():
     
     df = result.to_pandas()
     col_name = f'avg(greenhouse_sensors.{states.WATER_TANK_LEVEL})'
-    logger.debug(f"Average tank level: {df[col_name].iloc[0]}")
-    return df[col_name].iloc[0]
+    avg_val = df[col_name].iloc[0]
+    if avg_val is not None:
+        avg_val = round(avg_val, 2)
+    logger.debug(f"Average tank level: {avg_val}")
+    return avg_val
 
 def get_sensor_means(client, plan_id):
     fluents = {}
@@ -116,7 +119,7 @@ def get_sensor_means(client, plan_id):
         if not df.empty and col_name in df.columns:
             value = df[col_name].iloc[0]
             if value is not None:
-                fluents[fluent] = float(value)
+                fluents[fluent] = round(float(value), 2)
     return fluents
 
 def get_latest_hours_until_rain():

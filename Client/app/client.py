@@ -136,7 +136,7 @@ def invoke_action(action, client):
                 client.water_pump.turn_off()
                 print("Action: Turning water pump off")
             elif act == states.PLANNER_HUMIDITY_CHANGE:
-                client.humidity_sensor.set_target_humidity(tokens[-1])
+                client.humidity_sensor.set_target_humidity(int(tokens[-1]))
                 print(f"Action: Setting Humidity value {tokens[-1]}")
     except Exception as e:
         print(f"Error executing action: {str(e)}")
