@@ -10,41 +10,33 @@ class StateManager:
         {RUN_ROOF_SERVO_S2, CLOSE_ROOF_SERVO_S2},
     ]
 
-    def __init__(self, rabbitmq_client, states_queue):
-        self.state = DEFAULT_STATE
-        self.rabbitmq_client = rabbitmq_client
-        self.states_queue = states_queue
+    def __init__(self, client):
+        self.client = client
+        self.current_state = {**DEFAULT_STATE}
 
-    def update_state(self, key):
-        print(f"Updated state here: {self.state}")
+    def update_state(self, new_state_key):
         # Validation: Only allow one state in each mutually exclusive group to be 1
         for group in self._MUTUALLY_EXCLUSIVE:
-            if key in group:
+            if new_state_key in group:
                 for other_key in group:
-                    self.state[other_key] = 1 if other_key == key else 0
+                    self.current_state[other_key] = 1 if other_key == new_state_key else 0
                 break
         else:
             # If not in any group, just set to 1
-            self.state[key] = 1
-        self.send_state()
+            self.current_state[new_state_key] = 1
+        print(f"Updated state here: {self.current_state}")
+
+        # Use the thread-safe method to send the state
+        self.client.send_state_threadsafe(self.current_state)
 
     def update_plan(self, plan_id):
         try:
             if not isinstance(plan_id, int):
                 raise ValueError(f"PLAN_ID must be an integer, got {type(plan_id).__name__}")
-            self.state[PLAN_ID] = plan_id
+            self.current_state[PLAN_ID] = plan_id
         except Exception as e:
             print(f"Failed to set PLAN_ID: {e}")
-            self.state[PLAN_ID] = None
+            self.current_state[PLAN_ID] = None
 
-    def get_state(self):
-        return self.state.copy()
-
-    def send_state(self):
-        message = json.dumps(self.state)
-        self.rabbitmq_client.channel.basic_publish(
-            exchange='',
-            routing_key=self.states_queue,
-            body=message.encode()
-        )
-        print(f"Sent state to {self.states_queue}: {self.state}")
+    def get_current_state(self):
+        return self.current_state.copy()

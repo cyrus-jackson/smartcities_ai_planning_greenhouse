@@ -31,8 +31,7 @@ class RabbitMQClient:
         self.channel.queue_declare(queue=self.planner_queue)
         self.channel.queue_declare(queue=self.sensor_queue)
         self.channel.queue_declare(queue=self.states_queue)
-        self.state_manager = StateManager(self, self.states_queue)
-        # Instantiate modules once and reuse
+        self.state_manager = StateManager(self)
         self.fan = FanModule(self.state_manager, relay_port=FAN_GPIO)
         self.water_pump = WaterPumpModule(self.state_manager, gpio_pin=WATER_PUMP_GPIO, auto_shutoff_duration=6)
         self.roof = RoofModule(self.state_manager)
@@ -44,6 +43,22 @@ class RabbitMQClient:
             routing_key=self.sensor_queue,
             body=message.encode()
         )
+
+    def send_state(self, state):
+        # This is for the main thread ONLY
+        if self.channel and self.channel.is_open:
+            self.channel.basic_publish(
+                exchange='',
+                routing_key='states_queue',
+                body=json.dumps(state)
+            )
+
+    def send_state_threadsafe(self, state):
+        # This is for ANY thread
+        if self.connection and self.connection.is_open:
+            self.connection.add_callback_threadsafe(
+                lambda: self.send_state(state)
+            )
 
     def start_consuming(self, callback):
         def on_message(ch, method, properties, body):
