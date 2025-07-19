@@ -71,7 +71,7 @@ def sensor_loop(rabbitmq_client, interval=5):
             water_level = float(water_level_sensor.get_reading())
             
             # Get current state and plan ID
-            state = state_manager.get_state()
+            state = state_manager.get_current_state()
             plan_id = state.get(states.PLAN_ID, None)
             
             # Create message payload
