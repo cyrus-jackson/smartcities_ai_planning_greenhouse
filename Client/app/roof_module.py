@@ -32,11 +32,12 @@ class RoofModule:
         try:
             if "s1" in servo_state:
                 self.set_angle(self.pwm1, 90)
+                self.state_manager.update_state(states.RUN_ROOF_SERVO_S1)
                 print(f"RoofModule: Opening roof servo {self.servo_1} to 90 degrees")
             else:
                 self.set_angle(self.pwm2, 90)
+                self.state_manager.update_state(states.RUN_ROOF_SERVO_S2)
                 print(f"RoofModule: Opening roof servo {self.servo_2} to 90 degrees")
-            self.state_manager.update_state(servo_state)
         except Exception as e:
             print(f"Error opening roof servo: {e}")
 
@@ -44,11 +45,12 @@ class RoofModule:
         try:
             if "s1" in servo_state:
                 self.set_angle(self.pwm1, 0)
+                self.state_manager.update_state(states.CLOSE_ROOF_SERVO_S1)
                 print(f"RoofModule: Closing roof servo {self.servo_1} to 0 degrees")
             else:
                 self.set_angle(self.pwm2, 0)
                 print(f"RoofModule: Closing roof servo {self.servo_2} to 0 degrees")
-            self.state_manager.update_state(servo_state)
+                self.state_manager.update_state(states.CLOSE_ROOF_SERVO_S2)
         except Exception as e:
             print(f"Error closing roof servo: {e}")
 
