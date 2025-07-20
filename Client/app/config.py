@@ -16,7 +16,7 @@ WATER_PUMP_GPIO = 27
 # D4
 WATER_TANK_GPIO = 4
 # In Centimeters
-WATER_TANK_HEIGHT = 100
+WATER_TANK_HEIGHT = 22
 
 # Roof GPIO. This is not a Groove Relay.
 SERVO_1_GPIO = 26

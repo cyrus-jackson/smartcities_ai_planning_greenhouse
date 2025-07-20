@@ -54,7 +54,7 @@ def sensor_loop(rabbitmq_client, interval=5):
     humidity_sensor = rabbitmq_client.humidity_sensor
     temperature_sensor = TemperatureSensor(analog_port=TEMPERATURE_GPIO)  # A0
     soil_moisture_sensor = SoilMoistureSensor(analog_port=SOIL_MOISTURE_GPIO) # A1
-    water_level_sensor = WaterTankLevelSensor(digital_port=WATER_TANK_GPIO, tank_height=WATER_TANK_HEIGHT)  # D4, 100cm tank
+    water_level_sensor = WaterTankLevelSensor(digital_port=WATER_TANK_GPIO, tank_height=WATER_TANK_HEIGHT)  # D4, 22cm tank
     
     state_manager = rabbitmq_client.state_manager
 

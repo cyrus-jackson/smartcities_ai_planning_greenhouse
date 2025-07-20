@@ -19,6 +19,9 @@ class RoofModule:
         self.pwm2 = GPIO.PWM(self.servo_2, 50)
         self.pwm1.start(2.5)
         self.pwm2.start(2.5)
+        # Immediately stop PWM to prevent jitter at startup
+        self.pwm1.ChangeDutyCycle(0)
+        self.pwm2.ChangeDutyCycle(0)
         print("Roof servos initialized successfully")
 
     def set_angle(self, pwm, angle):

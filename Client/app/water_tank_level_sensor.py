@@ -3,13 +3,13 @@
 import grovepi
 
 class WaterTankLevelSensor:
-    def __init__(self, digital_port=4, tank_height=100):
+    def __init__(self, digital_port=4, tank_height=22):
         """
         Initialize Grove Ultrasonic Ranger v2.0 for water tank level measurement
         
         Args:
             digital_port: Digital port number where the ultrasonic sensor is connected (default: D4)
-            tank_height: Total tank height in cm (default: 100cm)
+            tank_height: Total tank height in cm (default: 22cm)
         """
         self.digital_port = digital_port
         self.tank_height = tank_height
@@ -125,9 +125,9 @@ if __name__ == '__main__':
     try:
         # Ask user for tank height
         try:
-            tank_height = float(input("Enter tank height in cm (default 100): ") or "100")
+            tank_height = float(input("Enter tank height in cm (default 22): ") or "22")
         except ValueError:
-            tank_height = 100
+            tank_height = 22
         
         sensor = WaterTankLevelSensor(digital_port=4, tank_height=tank_height)
         
