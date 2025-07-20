@@ -25,12 +25,28 @@ class RoofModule:
         print("Roof servos initialized successfully")
 
     def set_angle(self, pwm, angle):
+        # interp maps the angle (0-180) to the PWM duty cycle (2.5-12.5) for the servo
         from numpy import interp
         angle = max(0, min(180, angle))
-        duty = interp(angle, [0, 180], [2.5, 12.5])
-        pwm.ChangeDutyCycle(duty)
-        time.sleep(0.8)  # Allow servo to move
-        pwm.ChangeDutyCycle(0)  # Stop sending PWM to prevent jitter
+        # For graceful movement, step in 10-degree increments
+        try:
+            if hasattr(pwm, 'last_angle'):
+                start_angle = pwm.last_angle
+            else:
+                start_angle = 0
+            step = 10 if angle > start_angle else -10
+            for a in range(int(start_angle), int(angle), step):
+                duty = interp(a, [0, 180], [2.5, 12.5])
+                pwm.ChangeDutyCycle(duty)
+                time.sleep(0.05)
+            # Final position
+            duty = interp(angle, [0, 180], [2.5, 12.5])
+            pwm.ChangeDutyCycle(duty)
+            time.sleep(0.2)
+            pwm.ChangeDutyCycle(0)
+            pwm.last_angle = angle
+        except Exception as e:
+            print(f"Error in graceful servo movement: {e}")
 
     def open_roof(self, servo_state):
         try:

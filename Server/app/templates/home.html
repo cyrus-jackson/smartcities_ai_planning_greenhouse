@@ -204,7 +204,7 @@
 <div class="container-fluid py-4">
     <div id="jumbotronCoursework" class="alert alert-secondary alert-dismissible fade show mb-4 shadow-sm text-center" role="alert" style="font-size:1.25rem;">
         <div>
-            <span class="display-6 fw-bold">Smart Cities and AI Planning Coursework</span><br>
+            <span class="display-6 fw-bold">Smart Cities and Internet of Things Coursework</span><br>
             <span class="fw-medium text-secondary" style="font-size:1.05rem;">
                 Project By: <span class="text-success">Cyrus Jackson Dhara</span>
             </span>
@@ -640,7 +640,24 @@
 
     function updateRainCard(hours) {
         const label = document.getElementById('rainCardLabel');
-        label.textContent = hours !== null && hours !== undefined ? hours : '--';
+        const card = document.getElementById('rainCard');
+        if (hours === 0) {
+            label.textContent = 'Raining now';
+            card.classList.add('bg-primary', 'text-white');
+            card.classList.remove('bg-info');
+        } else if (hours !== null && hours !== undefined && hours <= 72) {
+            label.textContent = `Rain in: ${hours} hour${hours === 1 ? '' : 's'}`;
+            card.classList.remove('bg-primary', 'text-white');
+            card.classList.add('bg-info');
+        } else if (hours > 72) {
+            label.textContent = 'No rain expected soon';
+            card.classList.remove('bg-primary', 'text-white');
+            card.classList.add('bg-info');
+        } else {
+            label.textContent = '--';
+            card.classList.remove('bg-primary', 'text-white');
+            card.classList.add('bg-info');
+        }
     }
 
 

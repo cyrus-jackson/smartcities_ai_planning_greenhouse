@@ -33,7 +33,7 @@ def plans_view():
     # Load the domain file
     with open('app/ai/planner/domain.pddl', 'r') as f:
         domain_content = f.read()
-    plans = get_last_n_pddl_problems(5)
+    plans = get_last_n_pddl_problems(10)
     return render_template('plans_view.html', domain=domain_content, plans=plans)
 
 

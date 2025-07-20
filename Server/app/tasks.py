@@ -148,7 +148,7 @@ def long_running_task(x, y):
             redis_client.delete(lock_id)
 
 def fetch_weather_forecast():
-    url = "https://api.open-meteo.com/v1/forecast?latitude=48.7428207&longitude=9.1012773&hourly=rain,precipitation,precipitation_probability&timezone=auto&forecast_days=1"
+    url = "https://api.open-meteo.com/v1/forecast?latitude=48.7428207&longitude=9.1012773&hourly=precipitation_probability&current=rain&timezone=GMT&forecast_days=3"
     try:
         response = requests.get(url, timeout=10)
         response.raise_for_status()

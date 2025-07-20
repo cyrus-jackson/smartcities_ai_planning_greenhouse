@@ -209,14 +209,20 @@ def insert_hours_until_rain(data):
         required_prob = 20
         client = _InfluxSingleton.get_client()
         probabilities = data["hourly"]["precipitation_probability"]
+        times = data["hourly"]["time"]
+        current_time_str = data["current"]["time"]
+        from datetime import datetime, timezone
+        current_time = datetime.strptime(current_time_str, "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc)
         hours_until_rain = None
         for idx, prob in enumerate(probabilities):
             if prob > required_prob:
-                hours_until_rain = idx  # hours from now
+                rain_time = datetime.strptime(times[idx], "%Y-%m-%dT%H:%M").replace(tzinfo=timezone.utc)
+                delta = (rain_time - current_time).total_seconds() / 3600.0
+                hours_until_rain = max(0, round(delta, 2))
                 break
         if hours_until_rain is None:
-            logger.info(f"No rain expected in the forecast period (precipitation_probability > {required_prob}% not found). Setting it to default 100")
-            hours_until_rain = 100
+            logger.info(f"No rain expected in the forecast period (precipitation_probability > {required_prob}% not found). Setting it to default 1000")
+            hours_until_rain = 1000
         point = (
             Point("weather")
             .field("hours_until_rain", hours_until_rain)

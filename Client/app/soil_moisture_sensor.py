@@ -14,8 +14,8 @@ class SoilMoistureSensor:
         self.is_initialized = False
         
         # Grove Moisture Sensor v1.1 specific calibration values
-        self.dry_value = 950    # Typical dry soil reading
-        self.wet_value = 300    # Typical wet soil reading
+        self.dry_value = 20    # Typical dry soil reading
+        self.wet_value = 580    # Typical wet soil reading
         
         self._init_sensor()
     
