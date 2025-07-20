@@ -32,7 +32,7 @@ class WaterPumpModule:
             GPIO.setmode(GPIO.BCM)
             GPIO.setup(self.gpio_pin, GPIO.OUT)
             # Start with pump OFF (relay not activated)
-            GPIO.output(self.gpio_pin, GPIO.LOW)
+            GPIO.output(self.gpio_pin, GPIO.HIGH)
             
             self.is_initialized = True
             print(f"WaterPumpModule: GPIO initialized on pin {self.gpio_pin}")
@@ -65,7 +65,7 @@ class WaterPumpModule:
         
         try:
             print("WaterPumpModule: Turning water pump ON")
-            GPIO.output(self.gpio_pin, GPIO.HIGH)
+            GPIO.output(self.gpio_pin, GPIO.LOW)
             self.state_manager.update_state(states.WATER_PUMP_ON)
             
             # Set auto-shutoff timer
@@ -94,7 +94,7 @@ class WaterPumpModule:
         
         try:
             print("WaterPumpModule: Turning water pump OFF")
-            GPIO.output(self.gpio_pin, GPIO.LOW)
+            GPIO.output(self.gpio_pin, GPIO.HIGH)
             self.state_manager.update_state(states.WATER_PUMP_OFF)
             print("WaterPumpModule: Water pump is now OFF - Relay deactivated")
             return True
