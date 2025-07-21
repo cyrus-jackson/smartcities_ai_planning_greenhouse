@@ -26,7 +26,7 @@
     ;; Alerts
     (alert_issued ?level - alert-level)
 
-    ;; Global completion marker
+    ;; Global completion
     (all_conditions_assessed)
   )
 
