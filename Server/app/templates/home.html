@@ -680,6 +680,8 @@
             'not (servo_on s2)': { label: 'Roof S2 Closed', icon: '🔒' },
             'water_pump_on mp1': { label: 'Water Pump On', icon: '💧' },
             'not (water_pump_on mp1)': { label: 'Water Pump Off', icon: '🚫💧' },
+            'expecting_rain_alert hs1': { label: 'Expecting Rain Soon', icon: '🌧️', alert: true, alertType: 'info' },
+            'issue_low_water_alert wl ss': { label: 'Low Water Level Alert', icon: '🚨', alert: true, alertType: 'danger' },
         };
 
         const allStates = [];
@@ -700,14 +702,27 @@
                 allStates.push({
                     key,
                     label: stateMap[key].label,
-                    icon: stateMap[key].icon
+                    icon: stateMap[key].icon,
+                    alert: stateMap[key].alert || false,
+                    alertType: stateMap[key].alertType || null
+                });
+            } else if (key.includes('alert')) {
+                // Fallback for unknown alerts
+                allStates.push({
+                    key,
+                    label: key.replace(/_/g, ' ').replace('alert', 'Alert').replace(/\b\w/g, l => l.toUpperCase()),
+                    icon: '⚠️',
+                    alert: true,
+                    alertType: 'warning'
                 });
             } else {
                 // Fallback for unknown states
                 allStates.push({
                     key,
                     label: key,
-                    icon: '❔'
+                    icon: '❔',
+                    alert: false,
+                    alertType: null
                 });
             }
         }
@@ -724,13 +739,19 @@
         }
         states.forEach(state => {
             let dotColor = "#adb5bd";
-            if (state.key.includes("on") || state.key.includes("open")) dotColor = "#198754";
-            if (state.key.includes("off") || state.key.includes("close")) dotColor = "#dc3545";
-            if (state.key.includes("alert")) dotColor = "#ffc107";
-            if (state.key.includes("rain")) dotColor = "#0dcaf0";
-            if (state.key.includes("safe")) dotColor = "#20c997";
+            let alertClass = "";
+            if (state.alert) {
+                // Special highlight for alerts
+                alertClass = `alert alert-${state.alertType || 'warning'} fw-bold px-2 py-1 mb-1`;
+                dotColor = state.alertType === 'danger' ? '#dc3545' : (state.alertType === 'info' ? '#0dcaf0' : '#ffc107');
+            } else {
+                if (state.key.includes("on") || state.key.includes("open")) dotColor = "#198754";
+                if (state.key.includes("off") || state.key.includes("close")) dotColor = "#dc3545";
+                if (state.key.includes("rain")) dotColor = "#0dcaf0";
+                if (state.key.includes("safe")) dotColor = "#20c997";
+            }
             stateList.innerHTML += `
-                <li class="state-list-item list-group-item bg-transparent">
+                <li class="state-list-item list-group-item bg-transparent ${alertClass}">
                     <span>
                         <span class="state-icon">${state.icon}</span>
                         ${state.label}
